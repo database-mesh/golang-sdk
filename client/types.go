@@ -226,3 +226,72 @@ type MySQL struct {
 type KClient struct {
 	Client dynamic.Interface
 }
+
+type DataShard struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              DataShardSpec   `json:"spec,omitempty"`
+	Status            DataShardStatus `json:"status,omitempty"`
+}
+
+type DataShardSpec struct {
+	Rules []ShardingRule `json:"rules"`
+}
+
+type ShardingRule struct {
+	TableName               string                   `json:"tableName"`
+	ReadWriteSplittingGroup *ReadWriteSplittingGroup `json:"readWriteSplittingGroup,omitempty"`
+	ActualDatanodes         ActualDatanodesValue     `json:"actualDatanodes"`
+	TableStrategy           *TableStrategy           `json:"tableStrategy,omitempty"`
+	DatabaseStrategy        *DatabaseStrategy        `json:"databaseStrategy,omitempty"`
+	DatabaseTableStrategy   *DatabaseTableStrategy   `json:"databaseTableStrategy,omitempty"`
+}
+
+type TableStrategy struct {
+	TableShardingAlgorithmName string `json:"tableShardingAlgorithmName"`
+	TableShardingColumn        string `json:"tableShardingColumn"`
+	ShardingCount              uint32 `json:"shardingCount"`
+}
+
+type DatabaseStrategy struct {
+	DatabaseShardingAlgorithmName string `json:"databaseShardingAlgorithmName"`
+	DatabaseShardingColumn        string `json:"databaseShardingColumn"`
+}
+
+type DatabaseTableStrategy struct {
+	TableStrategy
+	DatabaseStrategy
+}
+
+type ActualDatanodesValue struct {
+	ValueSource *ValueSourceType `json:"valueSource"`
+}
+
+type ValueSourceType struct {
+	*ActualDatanodesExpressionValue
+}
+
+type ActualDatanodesExpressionValue struct {
+	Expression string `json:"expression"`
+}
+
+type ActualDatanodesNodeValue struct {
+	Nodes []ValueFrom `json:"nodes"`
+}
+
+type ValueFrom struct {
+	Value                       string                       `json:"value"`
+	ValueFromReadWriteSplitting *ValueFromReadWriteSplitting `json:"valueFromReadWriteSplitting,omitempty"`
+}
+
+type ValueFromReadWriteSplitting struct {
+	Name string `json:"name"`
+}
+
+type ReadWriteSplittingGroup struct {
+	Name  string                   `json:"name"`
+	Rules []ReadWriteSplittingRule `json:"rules,omitempty"`
+}
+
+type DataShardStatus struct {
+}
