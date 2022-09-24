@@ -239,12 +239,12 @@ type DataShardSpec struct {
 }
 
 type ShardingRule struct {
-	TableName               string                   `json:"tableName"`
-	ReadWriteSplittingGroup *ReadWriteSplittingGroup `json:"readWriteSplittingGroup,omitempty"`
-	ActualDatanodes         ActualDatanodesValue     `json:"actualDatanodes"`
-	TableStrategy           *TableStrategy           `json:"tableStrategy,omitempty"`
-	DatabaseStrategy        *DatabaseStrategy        `json:"databaseStrategy,omitempty"`
-	DatabaseTableStrategy   *DatabaseTableStrategy   `json:"databaseTableStrategy,omitempty"`
+	TableName               string                    `json:"tableName"`
+	ReadWriteSplittingGroup []ReadWriteSplittingGroup `json:"readWriteSplittingGroup,omitempty"`
+	ActualDatanodes         ActualDatanodesValue      `json:"actualDatanodes"`
+	TableStrategy           *TableStrategy            `json:"tableStrategy,omitempty"`
+	DatabaseStrategy        *DatabaseStrategy         `json:"databaseStrategy,omitempty"`
+	DatabaseTableStrategy   *DatabaseTableStrategy    `json:"databaseTableStrategy,omitempty"`
 }
 
 type TableStrategy struct {
