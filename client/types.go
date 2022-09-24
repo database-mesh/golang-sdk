@@ -270,6 +270,7 @@ type ActualDatanodesValue struct {
 
 type ValueSourceType struct {
 	*ActualDatanodesExpressionValue
+	*ActualDatanodesNodeValue
 }
 
 type ActualDatanodesExpressionValue struct {
