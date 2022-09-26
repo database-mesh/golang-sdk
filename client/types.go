@@ -40,7 +40,7 @@ type VirtualDatabaseService struct {
 
 	Name            string `json:"name"`
 	TrafficStrategy string `json:"trafficStrategy"`
-	DataShard       string `json:"dataShard"`
+	DataShard       string `json:"dataShard,omitempty"`
 }
 
 // DatabaseService The type of VirtualDatabase that needs to be applied for.
@@ -135,20 +135,20 @@ type MasterHighAvailability struct {
 }
 
 type ReadOnlyProbe struct {
-	*Probe
+	*Probe `json:",inline"`
 }
 
 type ReplicationLagProbe struct {
-	*Probe
+	*Probe            `json:",inline"`
 	MaxReplicationLag uint64 `json:"maxReplicationLag"`
 }
 
 type PingProbe struct {
-	*Probe
+	*Probe `json:",inline"`
 }
 
 type ConnectionProbe struct {
-	*Probe
+	*Probe `json:",inline"`
 }
 
 type Probe struct {
@@ -260,8 +260,8 @@ type DatabaseStrategy struct {
 }
 
 type DatabaseTableStrategy struct {
-	TableStrategy
-	DatabaseStrategy
+	TableStrategy    `json:",inline"`
+	DatabaseStrategy `json:",inline"`
 }
 
 type ActualDatanodesValue struct {
@@ -269,8 +269,8 @@ type ActualDatanodesValue struct {
 }
 
 type ValueSourceType struct {
-	*ActualDatanodesExpressionValue
-	*ActualDatanodesNodeValue
+	*ActualDatanodesExpressionValue `json:",inline"`
+	*ActualDatanodesNodeValue       `json:",inline"`
 }
 
 type ActualDatanodesExpressionValue struct {
