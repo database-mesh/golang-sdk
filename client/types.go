@@ -297,3 +297,9 @@ type ReadWriteSplittingGroup struct {
 
 type DataShardStatus struct {
 }
+
+type DataShardList struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Items             []DataShard `json:"items"`
+}
