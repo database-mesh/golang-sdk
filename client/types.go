@@ -274,20 +274,20 @@ type ValueSourceType struct {
 }
 
 type ActualDatanodesExpressionValue struct {
-	Expression string `json:"expression"`
+	Expression string `json:"expression,omitempty"`
 }
 
 type ActualDatanodesNodeValue struct {
-	Nodes []ValueFrom `json:"nodes"`
+	Nodes []ValueFrom `json:"nodes,omitempty"`
 }
 
 type ValueFrom struct {
-	Value                       string                       `json:"value"`
+	Value                       string                       `json:"value,omitempty"`
 	ValueFromReadWriteSplitting *ValueFromReadWriteSplitting `json:"valueFromReadWriteSplitting,omitempty"`
 }
 
 type ValueFromReadWriteSplitting struct {
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 }
 
 type ReadWriteSplittingGroup struct {
