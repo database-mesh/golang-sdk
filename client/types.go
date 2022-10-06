@@ -41,6 +41,7 @@ type VirtualDatabaseService struct {
 	Name            string `json:"name"`
 	TrafficStrategy string `json:"trafficStrategy"`
 	DataShard       string `json:"dataShard,omitempty"`
+	TrafficQoS      string `json:"trafficQoS"`
 }
 
 // DatabaseService The type of VirtualDatabase that needs to be applied for.
@@ -65,6 +66,12 @@ type DatabaseMySQL struct {
 // TODO: Implement dynamic updates
 type VirtualDatabaseStatus struct {
 	Endpoints []string `json:"endpoints"`
+}
+
+type VirtualDatabaseList struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Items             []VirtualDatabase `json:"items"`
 }
 
 type TrafficStrategyList struct {
@@ -302,4 +309,42 @@ type DataShardList struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Items             []DataShard `json:"items"`
+}
+
+type TrafficQoS struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              TrafficQoSSpec   `json:"spec,omitempty"`
+	Status            TrafficQoSStatus `json:"status,omitempty"`
+}
+
+type TrafficQoSSpec struct {
+	Services []Service `json:"service,omitempty"`
+}
+
+type Service struct {
+	Name      string     `json:"name"`
+	QoSClass  string     `json:"qos_class,omitempty"`
+	QoSGroups []QoSGroup `json:"qos_group,omitempty"`
+}
+
+type QoSClassKind string
+
+const (
+	QoSClassKindGuaranteed = "guaranteed"
+	QoSClassKindBurstable  = "burstable"
+	QoSClassKindBestEffort = "besteffort"
+)
+
+type QoSGroup struct {
+	Rate string `json:"rate,omitempty"`
+	Ceil string `json:"ceil,omitempty"`
+}
+
+type TrafficQoSStatus struct{}
+
+type TrafficQoSList struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Items             []TrafficQoS `json:"items"`
 }
