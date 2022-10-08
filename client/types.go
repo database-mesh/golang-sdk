@@ -311,40 +311,31 @@ type DataShardList struct {
 	Items             []DataShard `json:"items"`
 }
 
-type TrafficQoS struct {
+type QoSClaim struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              TrafficQoSSpec   `json:"spec,omitempty"`
-	Status            TrafficQoSStatus `json:"status,omitempty"`
+	Spec              QoSClaimSpec   `json:"spec,omitempty"`
+	Status            QoSClaimStatus `json:"status,omitempty"`
 }
 
-type TrafficQoSSpec struct {
-	Services []Service `json:"service,omitempty"`
+type QoSClaimSpec struct {
+	TrafficQoS TrafficQoS `json:"trafficQoS"`
 }
 
-type Service struct {
-	Name      string     `json:"name"`
-	QoSClass  string     `json:"qos_class,omitempty"`
-	QoSGroups []QoSGroup `json:"qos_group,omitempty"`
+type TrafficQoS struct {
+	Name     string   `json:"name"`
+	QoSGroup QoSGroup `json:"qos_group,omitempty"`
 }
-
-type QoSClassKind string
-
-const (
-	QoSClassKindGuaranteed = "guaranteed"
-	QoSClassKindBurstable  = "burstable"
-	QoSClassKindBestEffort = "besteffort"
-)
 
 type QoSGroup struct {
 	Rate string `json:"rate,omitempty"`
 	Ceil string `json:"ceil,omitempty"`
 }
 
-type TrafficQoSStatus struct{}
+type QoSClaimStatus struct{}
 
-type TrafficQoSList struct {
+type QoSClaimList struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Items             []TrafficQoS `json:"items"`
+	Items             []QoSClaim `json:"items"`
 }
