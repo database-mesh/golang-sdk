@@ -41,7 +41,7 @@ type VirtualDatabaseService struct {
 	Name            string `json:"name"`
 	TrafficStrategy string `json:"trafficStrategy"`
 	DataShard       string `json:"dataShard,omitempty"`
-	TrafficQoS      string `json:"trafficQoS"`
+	QoSClaim        string `json:"qosClaim,omitempty"`
 }
 
 // DatabaseService The type of VirtualDatabase that needs to be applied for.
