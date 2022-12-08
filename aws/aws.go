@@ -1,54 +1,72 @@
+// Copyright 2022 SphereEx Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package aws
+
 import (
-    "github.com/aws/aws-sdk-go/aws"
-    "github.com/aws/aws-sdk-go/aws/credentials"
-    "github.com/aws/aws-sdk-go/aws/session"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awscfg "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 )
 
-type Sessions map[string]*session.Session
+type Sessions map[string]aws.Config
 
-type aws struct {
-    credentials []credential
+type awsCreds struct {
+	credentials []credential
 }
 
 type credential struct {
-    region string
-    accessKey string
-    secretAccessKey string
+	region          string
+	accessKey       string
+	secretAccessKey string
 }
 
-func NewSessions() *aws {
-    return &aws{credentials: []credential{}}
+func NewSessions() *awsCreds {
+	return &awsCreds{credentials: []credential{}}
 }
 
-func (s *aws)SetCredential(region, accessKey, secretAccessKey string) *aws{
-    s.credentials = append(s.credentials, credential{
-        region: region,
-	accessKey: accessKey,
-	secretAccessKey: secretAccessKey,
-    }) 
-    return s
+func (s *awsCreds) SetCredential(region, accessKey, secretAccessKey string) *awsCreds {
+	s.credentials = append(s.credentials, credential{
+		region:          region,
+		accessKey:       accessKey,
+		secretAccessKey: secretAccessKey,
+	})
+	return s
 }
 
-func (s *aws)Build() Sessions {
-    sess := map[string]*session.Session{}
-    for _, v := range s.credentials{
-        as, err := newAWSSession(v.region, v.accessKey, v.secretAccessKey)
-	if err != nil {
-            continue
+func (s *awsCreds) Build() Sessions {
+	sess := map[string]aws.Config{}
+	for _, v := range s.credentials {
+		as, err := newAWSSession(v.region, v.accessKey, v.secretAccessKey)
+		if err != nil {
+			continue
+		}
+		sess[v.region] = as
 	}
-        sess[v.region] = as 
-    }
-    return sess
+	return sess
 }
 
-func newAWSSession(region, ak, sk string) (*session.Session, error) {
-    c := credentials.NewStaticCredentials(ak, sk, "")
-    awscfg := &aws.Config{Credentials: c}
-    awscfg.WithRegion(v.region)
-    return session.NewSessionWithOptions(session.Options{
-        Config: *awscfg,
-        AssumeRoleTokenProvider: token.StdinStderrTokenProvider,
-        SharedConfigState:       session.SharedConfigEnable,
-    })
+func newAWSSession(region, ak, sk string) (aws.Config, error) {
+	opts := []func(*awscfg.LoadOptions) error{
+		awscfg.WithRegion(region),
+	}
+	opts = append(opts, awscfg.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+		ak,
+		sk,
+		"",
+	)))
+	return awscfg.LoadDefaultConfig(context.Background(), opts...)
 }
