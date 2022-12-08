@@ -23,6 +23,7 @@ import (
 
 type RDS interface {
 	Instance(context.Context) Instance
+	Cluster(context.Context) Cluster
 }
 
 type service struct {
@@ -36,8 +37,11 @@ func (s *service) Instance() *rdsInstance {
 func NewService(sess aws.Config) *service {
 	return &service{
 		instance: &rdsInstance{
-			core:  rds.NewFromConfig(sess),
-			param: &rds.CreateDBInstanceInput{},
+			core:                  rds.NewFromConfig(sess),
+			createInstanceParam:   &rds.CreateDBInstanceInput{},
+			deleteInstanceParam:   &rds.DeleteDBInstanceInput{},
+			failoverCluster:       &rds.FailoverDBClusterInput{},
+			failoverGlobalCluster: &rds.FailoverGlobalClusterInput{},
 		},
 	}
 }
