@@ -23,38 +23,55 @@ import (
 
 type RDS interface {
 	Instance(context.Context) Instance
+	Cluster(context.Context) Cluster
 }
 
 type service struct {
 	instance *rdsInstance
+	cluster  *rdsCluster
 }
 
 func (s *service) Instance() *rdsInstance {
 	return s.instance
 }
 
+func (s *service) Cluster() *rdsCluster {
+	return s.cluster
+}
+
 func NewService(sess aws.Config) *service {
 	return &service{
 		instance: &rdsInstance{
-			core:  rds.NewFromConfig(sess),
-			param: &rds.CreateDBInstanceInput{},
+			core:                rds.NewFromConfig(sess),
+			createInstanceParam: &rds.CreateDBInstanceInput{},
+			deleteInstanceParam: &rds.DeleteDBInstanceInput{},
+		},
+		cluster: &rdsCluster{
+			core:                       rds.NewFromConfig(sess),
+			createClusterParam:         &rds.CreateDBClusterInput{},
+			deleteClusterParam:         &rds.DeleteDBClusterInput{},
+			failoverClusterParam:       &rds.FailoverDBClusterInput{},
+			failoverGlobalClusterParam: &rds.FailoverGlobalClusterInput{},
 		},
 	}
 }
 
 type Instance interface {
-	Create() error
-	Delete() error
-	Failover() error
-	FailoverGlobal() error
+	Create(context.Context) error
+	Delete(context.Context) error
+}
+
+type Cluster interface {
+	Failover(context.Context) error
+	FailoverGlobal(context.Context) error
+	Create(context.Context) error
+	Delete(context.Context) error
 }
 
 type rdsInstance struct {
-	core                  *rds.Client
-	createInstanceParam   *rds.CreateDBInstanceInput
-	deleteInstanceParam   *rds.DeleteDBInstanceInput
-	failoverCluster       *rds.FailoverDBClusterInput
-	failoverGlobalCluster *rds.FailoverGlobalClusterInput
+	core                *rds.Client
+	createInstanceParam *rds.CreateDBInstanceInput
+	deleteInstanceParam *rds.DeleteDBInstanceInput
 }
 
 // CreateDBInstanceInput
@@ -135,34 +152,110 @@ func (s *rdsInstance) Delete(ctx context.Context) error {
 	return err
 }
 
+type rdsCluster struct {
+	core                       *rds.Client
+	createClusterParam         *rds.CreateDBClusterInput
+	deleteClusterParam         *rds.DeleteDBClusterInput
+	failoverClusterParam       *rds.FailoverDBClusterInput
+	failoverGlobalClusterParam *rds.FailoverGlobalClusterInput
+}
+
 // FailoverClusterInput
-func (s *rdsInstance) SetDBClusterIdentifier(id string) *rdsInstance {
-	s.failoverCluster.DBClusterIdentifier = aws.String(id)
+func (s *rdsCluster) SetDBClusterIdentifier(id string) *rdsCluster {
+	s.createClusterParam.DBClusterIdentifier = aws.String(id)
+	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
-func (s *rdsInstance) SetTargetDBInstanceIdentifier(id string) *rdsInstance {
-	s.failoverCluster.TargetDBInstanceIdentifier = aws.String(id)
+func (s *rdsCluster) SetTargetDBInstanceIdentifier(id string) *rdsCluster {
+	s.failoverClusterParam.TargetDBInstanceIdentifier = aws.String(id)
 	return s
 }
 
-func (s *rdsInstance) Failover(ctx context.Context) error {
-	_, err := s.core.FailoverDBCluster(ctx, s.failoverCluster)
+func (s *rdsCluster) Failover(ctx context.Context) error {
+	_, err := s.core.FailoverDBCluster(ctx, s.failoverClusterParam)
 	return err
 }
 
 // FailoverGlobalClusterInput
-func (s *rdsInstance) SetGlobalClusterIdentifier(id string) *rdsInstance {
-	s.failoverGlobalCluster.GlobalClusterIdentifier = aws.String(id)
+func (s *rdsCluster) SetGlobalClusterIdentifier(id string) *rdsCluster {
+	s.failoverGlobalClusterParam.GlobalClusterIdentifier = aws.String(id)
 	return s
 }
 
-func (s *rdsInstance) SetTargetDbClusterIdentifier(id string) *rdsInstance {
-	s.failoverGlobalCluster.TargetDbClusterIdentifier = aws.String(id)
+func (s *rdsCluster) SetTargetDbClusterIdentifier(id string) *rdsCluster {
+	s.failoverGlobalClusterParam.TargetDbClusterIdentifier = aws.String(id)
 	return s
 }
 
-func (s *rdsInstance) FailoverGlobal(ctx context.Context) error {
-	_, err := s.core.FailoverGlobalCluster(ctx, s.failoverGlobalCluster)
+func (s *rdsCluster) FailoverGlobal(ctx context.Context) error {
+	_, err := s.core.FailoverGlobalCluster(ctx, s.failoverGlobalClusterParam)
+	return err
+}
+
+// CreateDBClusterInput
+func (s *rdsCluster) SetEngine(engine string) *rdsCluster {
+	s.createClusterParam.Engine = aws.String(engine)
+	return s
+}
+
+func (s *rdsCluster) SetAllocatedStorage(size int32) *rdsCluster {
+	s.createClusterParam.AllocatedStorage = aws.Int32(size)
+	return s
+}
+
+func (s *rdsCluster) SetAvailabilityZones(azs []string) *rdsCluster {
+	s.createClusterParam.AvailabilityZones = azs
+	return s
+}
+
+func (s *rdsCluster) SetDBClusterInstanceClass(class string) *rdsCluster {
+	s.createClusterParam.DBClusterInstanceClass = aws.String(class)
+	return s
+}
+
+func (s *rdsCluster) SetDBSubnetGroupName(name string) *rdsCluster {
+	s.createClusterParam.DBSubnetGroupName = aws.String(name)
+	return s
+}
+
+func (s *rdsCluster) SetDatabaseName(name string) *rdsCluster {
+	s.createClusterParam.DatabaseName = aws.String(name)
+	return s
+}
+
+func (s *rdsCluster) SetEngineVersion(version string) *rdsCluster {
+	s.createClusterParam.EngineVersion = aws.String(version)
+	return s
+}
+
+func (s *rdsCluster) SetMasterUsername(username string) *rdsCluster {
+	s.createClusterParam.MasterUserPassword = aws.String(username)
+	return s
+}
+
+func (s *rdsCluster) SetMasterUserPassword(pass string) *rdsCluster {
+	s.createClusterParam.MasterUserPassword = aws.String(pass)
+	return s
+}
+
+func (s *rdsCluster) SetVpcSecurityGroupIds(sgs []string) *rdsCluster {
+	s.createClusterParam.VpcSecurityGroupIds = sgs
+	return s
+}
+
+func (s *rdsCluster) Create(ctx context.Context) error {
+	_, err := s.core.CreateDBCluster(ctx, s.createClusterParam)
+	return err
+}
+
+// DeleteDBClusterInput
+func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) *rdsCluster {
+	s.deleteClusterParam.SkipFinalSnapshot = *aws.Bool(skip)
+	return s
+}
+
+func (s *rdsCluster) Delete(ctx context.Context) error {
+	_, err := s.core.DeleteDBCluster(ctx, s.deleteClusterParam)
 	return err
 }
