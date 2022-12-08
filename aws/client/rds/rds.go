@@ -44,64 +44,125 @@ func NewService(sess aws.Config) *service {
 
 type Instance interface {
 	Create() error
+	Delete() error
+	Failover() error
+	FailoverGlobal() error
 }
 
 type rdsInstance struct {
-	core  *rds.Client
-	param *rds.CreateDBInstanceInput
+	core                  *rds.Client
+	createInstanceParam   *rds.CreateDBInstanceInput
+	deleteInstanceParam   *rds.DeleteDBInstanceInput
+	failoverCluster       *rds.FailoverDBClusterInput
+	failoverGlobalCluster *rds.FailoverGlobalClusterInput
 }
 
+// CreateDBInstanceInput
 func (s *rdsInstance) SetEngine(engine string) *rdsInstance {
-	s.param.Engine = aws.String(engine)
+	s.createInstanceParam.Engine = aws.String(engine)
 	return s
 }
 
 func (s *rdsInstance) SetEngineVersion(version string) *rdsInstance {
-	s.param.EngineVersion = aws.String(version)
+	s.createInstanceParam.EngineVersion = aws.String(version)
 	return s
 }
 
 func (s *rdsInstance) SetDBInstanceIdentifier(id string) *rdsInstance {
-	s.param.DBInstanceIdentifier = aws.String(id)
+	s.createInstanceParam.DBInstanceIdentifier = aws.String(id)
+	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
 func (s *rdsInstance) SetMasterUsername(username string) *rdsInstance {
-	s.param.MasterUsername = aws.String(username)
+	s.createInstanceParam.MasterUsername = aws.String(username)
 	return s
 }
 
 func (s *rdsInstance) SetMasterUserPassword(pass string) *rdsInstance {
-	s.param.MasterUserPassword = aws.String(pass)
+	s.createInstanceParam.MasterUserPassword = aws.String(pass)
 	return s
 }
 
 func (s *rdsInstance) SetDBInstanceClass(class string) *rdsInstance {
-	s.param.DBInstanceClass = aws.String(class)
+	s.createInstanceParam.DBInstanceClass = aws.String(class)
 	return s
 }
 
 func (s *rdsInstance) SetAllocatedStorage(size int32) *rdsInstance {
-	s.param.AllocatedStorage = aws.Int32(size)
+	s.createInstanceParam.AllocatedStorage = aws.Int32(size)
 	return s
 }
 
 func (s *rdsInstance) SetDBName(name string) *rdsInstance {
-	s.param.DBName = aws.String(name)
+	s.createInstanceParam.DBName = aws.String(name)
 	return s
 }
 
 func (s *rdsInstance) SetVpcSecurityGroupIds(sgs []string) *rdsInstance {
-	s.param.VpcSecurityGroupIds = sgs
+	s.createInstanceParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
 func (s *rdsInstance) SetDBSubnetGroup(name string) *rdsInstance {
-	s.param.DBSubnetGroupName = aws.String(name)
+	s.createInstanceParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
 func (s *rdsInstance) Create(ctx context.Context) error {
-	_, err := s.core.CreateDBInstance(ctx, s.param)
+	_, err := s.core.CreateDBInstance(ctx, s.createInstanceParam)
+	return err
+}
+
+// DeleteDBInstanceInput
+func (s *rdsInstance) SetDeleteAutomateBackups(enable bool) *rdsInstance {
+	s.deleteInstanceParam.DeleteAutomatedBackups = aws.Bool(enable)
+	return s
+}
+
+func (s *rdsInstance) SetFinalDBSnapshotIdentifier(id string) *rdsInstance {
+	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) SetSkipFinalSnapshot(skip bool) *rdsInstance {
+	s.deleteInstanceParam.SkipFinalSnapshot = skip
+	return s
+}
+
+func (s *rdsInstance) Delete(ctx context.Context) error {
+	_, err := s.core.DeleteDBInstance(ctx, s.deleteInstanceParam)
+	return err
+}
+
+// FailoverClusterInput
+func (s *rdsInstance) SetDBClusterIdentifier(id string) *rdsInstance {
+	s.failoverCluster.DBClusterIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) SetTargetDBInstanceIdentifier(id string) *rdsInstance {
+	s.failoverCluster.TargetDBInstanceIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) Failover(ctx context.Context) error {
+	_, err := s.core.FailoverDBCluster(ctx, s.failoverCluster)
+	return err
+}
+
+// FailoverGlobalClusterInput
+func (s *rdsInstance) SetGlobalClusterIdentifier(id string) *rdsInstance {
+	s.failoverGlobalCluster.GlobalClusterIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) SetTargetDbClusterIdentifier(id string) *rdsInstance {
+	s.failoverGlobalCluster.TargetDbClusterIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) FailoverGlobal(ctx context.Context) error {
+	_, err := s.core.FailoverGlobalCluster(ctx, s.failoverGlobalCluster)
 	return err
 }
