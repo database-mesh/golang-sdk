@@ -130,6 +130,16 @@ func (s *rdsInstance) SetDBSubnetGroup(name string) *rdsInstance {
 	return s
 }
 
+func (s *rdsInstance) SetMultiAZ(enable bool) *rdsInstance {
+	s.createInstanceParam.MultiAZ = aws.Bool(enable)
+	return s
+}
+
+func (s *rdsInstance) SetAvailabilityZones(az string) *rdsInstance {
+	s.createInstanceParam.AvailabilityZone = aws.String(az)
+	return s
+}
+
 func (s *rdsInstance) Create(ctx context.Context) error {
 	_, err := s.core.CreateDBInstance(ctx, s.createInstanceParam)
 	return err
@@ -156,12 +166,14 @@ func (s *rdsInstance) Delete(ctx context.Context) error {
 	return err
 }
 
+// NOTE: ForceFailover cannot be specified since the instance is not configured for either MultiAZ or High Availability
 // RebootDBInstanceInput
 func (s *rdsInstance) SetForceFailover(force bool) *rdsInstance {
 	s.rebootInstanceParam.ForceFailover = aws.Bool(force)
 	return s
 }
 
+// NOTE: Can only reboot db instances with state in: available, storage-optimization, incompatible-credentials, incompatible-parameters.
 func (s *rdsInstance) RebootDBInstance(ctx context.Context) error {
 	_, err := s.core.RebootDBInstance(ctx, s.rebootInstanceParam)
 	return err
@@ -248,7 +260,7 @@ func (s *rdsCluster) SetEngineVersion(version string) *rdsCluster {
 }
 
 func (s *rdsCluster) SetMasterUsername(username string) *rdsCluster {
-	s.createClusterParam.MasterUserPassword = aws.String(username)
+	s.createClusterParam.MasterUsername = aws.String(username)
 	return s
 }
 
@@ -259,6 +271,16 @@ func (s *rdsCluster) SetMasterUserPassword(pass string) *rdsCluster {
 
 func (s *rdsCluster) SetVpcSecurityGroupIds(sgs []string) *rdsCluster {
 	s.createClusterParam.VpcSecurityGroupIds = sgs
+	return s
+}
+
+func (s *rdsCluster) SetStorageType(t string) *rdsCluster {
+	s.createClusterParam.StorageType = aws.String(t)
+	return s
+}
+
+func (s *rdsCluster) SetIOPS(ps int32) *rdsCluster {
+	s.createClusterParam.Iops = aws.Int32(ps)
 	return s
 }
 
