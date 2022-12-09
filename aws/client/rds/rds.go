@@ -45,6 +45,7 @@ func NewService(sess aws.Config) *service {
 			core:                rds.NewFromConfig(sess),
 			createInstanceParam: &rds.CreateDBInstanceInput{},
 			deleteInstanceParam: &rds.DeleteDBInstanceInput{},
+			rebootInstanceParam: &rds.RebootDBInstanceInput{},
 		},
 		cluster: &rdsCluster{
 			core:                       rds.NewFromConfig(sess),
@@ -52,6 +53,7 @@ func NewService(sess aws.Config) *service {
 			deleteClusterParam:         &rds.DeleteDBClusterInput{},
 			failoverClusterParam:       &rds.FailoverDBClusterInput{},
 			failoverGlobalClusterParam: &rds.FailoverGlobalClusterInput{},
+			rebootClusterParam:         &rds.RebootDBClusterInput{},
 		},
 	}
 }
@@ -72,6 +74,7 @@ type rdsInstance struct {
 	core                *rds.Client
 	createInstanceParam *rds.CreateDBInstanceInput
 	deleteInstanceParam *rds.DeleteDBInstanceInput
+	rebootInstanceParam *rds.RebootDBInstanceInput
 }
 
 // CreateDBInstanceInput
@@ -88,6 +91,7 @@ func (s *rdsInstance) SetEngineVersion(version string) *rdsInstance {
 func (s *rdsInstance) SetDBInstanceIdentifier(id string) *rdsInstance {
 	s.createInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
+	s.rebootInstanceParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
@@ -152,18 +156,32 @@ func (s *rdsInstance) Delete(ctx context.Context) error {
 	return err
 }
 
+// RebootDBInstanceInput
+func (s *rdsInstance) SetForceFailover(force bool) *rdsInstance {
+	s.rebootInstanceParam.ForceFailover = aws.Bool(force)
+	return s
+}
+
+func (s *rdsInstance) RebootDBInstance(ctx context.Context) error {
+	_, err := s.core.RebootDBInstance(ctx, s.rebootInstanceParam)
+	return err
+}
+
 type rdsCluster struct {
 	core                       *rds.Client
 	createClusterParam         *rds.CreateDBClusterInput
 	deleteClusterParam         *rds.DeleteDBClusterInput
 	failoverClusterParam       *rds.FailoverDBClusterInput
 	failoverGlobalClusterParam *rds.FailoverGlobalClusterInput
+	rebootClusterParam         *rds.RebootDBClusterInput
 }
 
 // FailoverClusterInput
 func (s *rdsCluster) SetDBClusterIdentifier(id string) *rdsCluster {
 	s.createClusterParam.DBClusterIdentifier = aws.String(id)
+	s.deleteClusterParam.DBClusterIdentifier = aws.String(id)
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
+	s.rebootClusterParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -257,5 +275,11 @@ func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) *rdsCluster {
 
 func (s *rdsCluster) Delete(ctx context.Context) error {
 	_, err := s.core.DeleteDBCluster(ctx, s.deleteClusterParam)
+	return err
+}
+
+// RebootDBClusterInput
+func (s *rdsCluster) RebootDBCluster(ctx context.Context) error {
+	_, err := s.core.RebootDBCluster(ctx, s.rebootClusterParam)
 	return err
 }
