@@ -115,6 +115,11 @@ func (s *rdsInstance) SetAllocatedStorage(size int32) *rdsInstance {
 	return s
 }
 
+func (s *rdsInstance) SetIOPS(iops int32) *rdsInstance {
+	s.createInstanceParam.Iops = aws.Int32(iops)
+	return s
+}
+
 func (s *rdsInstance) SetDBName(name string) *rdsInstance {
 	s.createInstanceParam.DBName = aws.String(name)
 	return s
@@ -256,6 +261,11 @@ func (s *rdsCluster) SetDatabaseName(name string) *rdsCluster {
 
 func (s *rdsCluster) SetEngineVersion(version string) *rdsCluster {
 	s.createClusterParam.EngineVersion = aws.String(version)
+	return s
+}
+
+func (s *rdsCluster) SetEngineMode(mode string) *rdsCluster {
+	s.createClusterParam.EngineMode = aws.String(mode)
 	return s
 }
 
