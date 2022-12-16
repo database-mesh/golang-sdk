@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package client
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,4 +68,8 @@ type VirtualDatabaseList struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Items             []VirtualDatabase `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&VirtualDatabase{}, &VirtualDatabaseList{})
 }
