@@ -36,6 +36,11 @@ func init() {
 	kubeConfigPath = flag.String("kubeconfig", "", "(optional) absolute path to the kubeconfig file")
 }
 
+// KClient client for kubernetes
+type KClient struct {
+	Client dynamic.Interface
+}
+
 type ConfigBuilder struct {
 	path string
 }
