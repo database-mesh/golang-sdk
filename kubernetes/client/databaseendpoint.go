@@ -27,7 +27,8 @@ type DatabaseEndpointList struct {
 type DatabaseEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              DatabaseEndpointSpec `json:"spec,omitempty"`
+	Spec              DatabaseEndpointSpec   `json:"spec,omitempty"`
+	Status            DatabaseEndpointStatus `json:"status,omitempty"`
 }
 
 // DatabaseEndpointSpec defines the desired state of DatabaseEndpoint
@@ -48,3 +49,5 @@ type MySQL struct {
 	Password string `json:"password"`
 	DB       string `json:"db"`
 }
+
+type DatabaseEndpointStatus struct{}

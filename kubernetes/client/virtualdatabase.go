@@ -26,7 +26,8 @@ type VirtualDatabase struct {
 
 // VirtualDatabaseSpec defines the desired state of VirtualDatabase
 type VirtualDatabaseSpec struct {
-	Services []VirtualDatabaseService `json:"services"`
+	DatabaseClassName string                   `json:"databaseClassName"`
+	Services          []VirtualDatabaseService `json:"services"`
 }
 
 // Service Defines the content of a VirtualDatabase
