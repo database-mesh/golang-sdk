@@ -93,3 +93,7 @@ type DataShardList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DataShard `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&DataShard{}, &DataShardList{})
+}
