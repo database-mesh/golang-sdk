@@ -143,3 +143,7 @@ type ConcurrencyControl struct {
 	Duration       time.Duration `json:"duration"` // Issue: Duration:1ns in fmt.Print
 	MaxConcurrency int           `json:"maxConcurrency"`
 }
+
+func init() {
+	SchemeBuilder.Register(&TrafficStrategy{}, &TrafficStrategyList{})
+}

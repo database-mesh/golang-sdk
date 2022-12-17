@@ -51,3 +51,7 @@ type MySQL struct {
 }
 
 type DatabaseEndpointStatus struct{}
+
+func init() {
+	SchemeBuilder.Register(&DatabaseEndpoint{}, &DatabaseEndpointList{})
+}

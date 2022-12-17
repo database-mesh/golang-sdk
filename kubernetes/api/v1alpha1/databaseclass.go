@@ -69,3 +69,7 @@ type DatabaseClassList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DatabaseClass `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&DatabaseClass{}, &DatabaseClassList{})
+}

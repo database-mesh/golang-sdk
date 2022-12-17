@@ -46,3 +46,7 @@ type QoSClaimList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []QoSClaim `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&QoSClaim{}, &QoSClaimList{})
+}
