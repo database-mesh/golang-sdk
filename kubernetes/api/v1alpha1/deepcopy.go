@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -337,6 +338,427 @@ func (in *DatabaseEndpointList) DeepCopy() *DatabaseEndpointList {
 }
 
 func (in *DatabaseEndpointList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *ReadWriteSplittingRule) DeepCopyInto(out *ReadWriteSplittingRule) {
+	*out = *in
+	out.Name = in.Name
+	out.Type = in.Type
+	if in.Regex != nil {
+		in, out := &in.Regex, &out.Regex
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	out.Target = in.Target
+	out.AlgorithmName = in.AlgorithmName
+}
+
+func (in *ReadWriteSplittingGroup) DeepCopyInto(out *ReadWriteSplittingGroup) {
+	*out = *in
+	out.Name = in.Name
+	if in.Rules != nil {
+		in, out := &in.Rules, &out.Rules
+		*out = make([]ReadWriteSplittingRule, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+func (in *ShardingRule) DeepCopyInto(out *ShardingRule) {
+	*out = *in
+	out.TableName = in.TableName
+	if in.ReadWriteSplittingGroup != nil {
+		in, out := &in.ReadWriteSplittingGroup, &out.ReadWriteSplittingGroup
+		*out = make([]ReadWriteSplittingGroup, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	out.ActualDatanodes = in.ActualDatanodes
+	if in.ActualDatanodes.ValueSource != nil {
+		in, out := &in.ActualDatanodes.ValueSource, &out.ActualDatanodes.ValueSource
+		*out = new(ValueSourceType)
+		**out = **in
+	}
+	if in.TableStrategy != nil {
+		in, out := &in.TableStrategy, &out.TableStrategy
+		*out = new(TableStrategy)
+		**out = **in
+	}
+
+	if in.DatabaseStrategy != nil {
+		in, out := &in.DatabaseStrategy, &out.DatabaseStrategy
+		*out = new(DatabaseStrategy)
+		**out = **in
+	}
+
+	if in.DatabaseTableStrategy != nil {
+		in, out := &in.DatabaseTableStrategy, &out.DatabaseTableStrategy
+		*out = new(DatabaseTableStrategy)
+		**out = **in
+	}
+}
+
+func (in *DataShardSpec) DeepCopyInto(out *DataShardSpec) {
+	*out = *in
+	if in.Rules != nil {
+		in, out := &in.Rules, &out.Rules
+		*out = make([]ShardingRule, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+func (in *DataShardStatus) DeepCopyInto(out *DataShardStatus) {
+	*out = *in
+}
+
+func (in *DataShard) DeepCopyInto(out *DataShard) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *DataShard) DeepCopy() *DataShard {
+	if in == nil {
+		return nil
+	}
+	out := new(DataShard)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *DataShard) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *DataShardList) DeepCopyInto(out *DataShardList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]DataShard, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+func (in *DataShardList) DeepCopy() *DataShardList {
+	if in == nil {
+		return nil
+	}
+	out := new(DataShardList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *DataShardList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *CircuitBreak) DeepCopyInto(out *CircuitBreak) {
+	*out = *in
+	if in.Regex != nil {
+		in, out := &in.Regex, &out.Regex
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+}
+
+func (in *ConcurrencyControl) DeepCopyInto(out *ConcurrencyControl) {
+	*out = *in
+	out.Duration = in.Duration
+	out.MaxConcurrency = in.MaxConcurrency
+	if in.Regex != nil {
+		in, out := &in.Regex, &out.Regex
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+}
+
+func (in *Probe) DeepCopyInto(out *Probe) {
+	*out = *in
+	out.TimeoutMilliseconds = in.TimeoutMilliseconds
+	out.FailureThreshold = in.FailureThreshold
+	out.PeriodMilliseconds = in.PeriodMilliseconds
+	out.SuccessThreshold = in.SuccessThreshold
+}
+
+func (in *ConnectionProbe) DeepCopyInto(out *ConnectionProbe) {
+	*out = *in
+	if in.Probe != nil {
+		in, out := &in.Probe, &out.Probe
+		*out = new(Probe)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *PingProbe) DeepCopyInto(out *PingProbe) {
+	*out = *in
+	if in.Probe != nil {
+		in, out := &in.Probe, &out.Probe
+		*out = new(Probe)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *ReplicationLagProbe) DeepCopyInto(out *ReplicationLagProbe) {
+	*out = *in
+	out.MaxReplicationLag = in.MaxReplicationLag
+	if in.Probe != nil {
+		in, out := &in.Probe, &out.Probe
+		*out = new(Probe)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *ReadOnlyProbe) DeepCopyInto(out *ReadOnlyProbe) {
+	*out = *in
+	if in.Probe != nil {
+		in, out := &in.Probe, &out.Probe
+		*out = new(Probe)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *MasterHighAvailability) DeepCopyInto(out *MasterHighAvailability) {
+	*out = *in
+	out.User = in.User
+	out.Password = in.Password
+	out.MonitorInterval = in.MonitorInterval
+	if in.ConnectionProbe != nil {
+		in, out := &in.ConnectionProbe, &out.ConnectionProbe
+		*out = new(ConnectionProbe)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.PingProbe != nil {
+		in, out := &in.PingProbe, &out.PingProbe
+		*out = new(PingProbe)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ReplicationLagProbe != nil {
+		in, out := &in.ReplicationLagProbe, &out.ReplicationLagProbe
+		*out = new(ReplicationLagProbe)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ReadOnlyProbe != nil {
+		in, out := &in.ReadOnlyProbe, &out.ReadOnlyProbe
+		*out = new(ReadOnlyProbe)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *ReadWriteSplittingDynamic) DeepCopyInto(out *ReadWriteSplittingDynamic) {
+	*out = *in
+	out.DefaultTarget = in.DefaultTarget
+	if in.Rules != nil {
+		in, out := &in.Rules, &out.Rules
+		*out = make([]ReadWriteSplittingRule, len(*in))
+		copy(*out, *in)
+	}
+	out.Discovery = in.Discovery
+	if in.Discovery.MasterHighAvailability != nil {
+		in, out := &in.Discovery.MasterHighAvailability, &out.Discovery.MasterHighAvailability
+		*out = new(MasterHighAvailability)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *ReadWriteSplittingStatic) DeepCopyInto(out *ReadWriteSplittingStatic) {
+	*out = *in
+}
+
+func (in *ReadWriteSplitting) DeepCopyInto(out *ReadWriteSplitting) {
+	*out = *in
+	if in.Dynamic != nil {
+		in, out := &in.Dynamic, &out.Dynamic
+		*out = new(ReadWriteSplittingDynamic)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Static != nil {
+		in, out := &in.Static, &out.Static
+		*out = new(ReadWriteSplittingStatic)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *SimpleLoadBalance) DeepCopyInto(out *SimpleLoadBalance) {
+	*out = *in
+	out.Kind = in.Kind
+}
+
+func (in *LoadBalance) DeepCopyInto(out *LoadBalance) {
+	*out = *in
+	if in.ReadWriteSplitting != nil {
+		in, out := &in.ReadWriteSplitting, &out.ReadWriteSplitting
+		*out = new(ReadWriteSplitting)
+		(*in).DeepCopyInto(*out)
+	}
+
+	if in.SimpleLoadBalance != nil {
+		in, out := &in.SimpleLoadBalance, &out.SimpleLoadBalance
+		*out = new(SimpleLoadBalance)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *TrafficStrategySpec) DeepCopyInto(out *TrafficStrategySpec) {
+	*out = *in
+	if in.Selector != nil {
+		in, out := &in.Selector, &out.Selector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
+
+	if in.LoadBalance != nil {
+		in, out := &in.LoadBalance, &out.LoadBalance
+		*out = new(LoadBalance)
+		(*in).DeepCopyInto(*out)
+	}
+
+	if in.CircuitBreaks != nil {
+		in, out := &in.CircuitBreaks, &out.CircuitBreaks
+		*out = make([]CircuitBreak, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+
+	if in.ConcurrencyControls != nil {
+		in, out := &in.ConcurrencyControls, &out.ConcurrencyControls
+		*out = make([]ConcurrencyControl, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+func (in *TrafficStrategyStatus) DeepCopyInto(out *TrafficStrategyStatus) {
+	*out = *in
+}
+
+func (in *TrafficStrategy) DeepCopyInto(out *TrafficStrategy) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+func (in *TrafficStrategy) DeepCopy() *TrafficStrategy {
+	if in == nil {
+		return nil
+	}
+	out := new(TrafficStrategy)
+	in.DeepCopyInto(out)
+	return out
+}
+func (in *TrafficStrategy) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *TrafficStrategyList) DeepCopyInto(out *TrafficStrategyList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]TrafficStrategy, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+func (in *TrafficStrategyList) DeepCopy() *TrafficStrategyList {
+	if in == nil {
+		return nil
+	}
+	out := new(TrafficStrategyList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *TrafficStrategyList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *QoSClaimSpec) DeepCopyInto(out *QoSClaimSpec) {
+	*out = *in
+	out.TrafficQoS = in.TrafficQoS
+}
+
+func (in *QoSClaimStatus) DeepCopyInto(out *QoSClaimStatus) {
+	*out = *in
+}
+
+func (in *QoSClaim) DeepCopyInto(out *QoSClaim) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *QoSClaim) DeepCopy() *QoSClaim {
+	if in == nil {
+		return nil
+	}
+	out := new(QoSClaim)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *QoSClaim) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *QoSClaimList) DeepCopyInto(out *QoSClaimList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]QoSClaim, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+func (in *QoSClaimList) DeepCopy() *QoSClaimList {
+	if in == nil {
+		return nil
+	}
+	out := new(QoSClaimList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *QoSClaimList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
