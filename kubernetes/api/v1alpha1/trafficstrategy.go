@@ -20,15 +20,16 @@ import (
 )
 
 type TrafficStrategyList struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Items             []TrafficStrategy `json:"items"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []TrafficStrategy `json:"items"`
 }
 
 type TrafficStrategy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              TrafficStrategySpec `json:"spec,omitempty"`
+	Spec              TrafficStrategySpec   `json:"spec,omitempty"`
+	Status            TrafficStrategyStatus `json:"status,omitempty"`
 }
 
 // TrafficStrategySpec defines the desired state of TrafficStrategy
@@ -143,6 +144,8 @@ type ConcurrencyControl struct {
 	Duration       time.Duration `json:"duration"` // Issue: Duration:1ns in fmt.Print
 	MaxConcurrency int           `json:"maxConcurrency"`
 }
+
+type TrafficStrategyStatus struct{}
 
 func init() {
 	SchemeBuilder.Register(&TrafficStrategy{}, &TrafficStrategyList{})
