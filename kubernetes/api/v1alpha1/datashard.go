@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +kubebuilder:object:root=true
 type DataShard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -25,6 +26,7 @@ type DataShard struct {
 	Status            DataShardStatus `json:"status,omitempty"`
 }
 
+// DataShardSpec is spec for DataShard
 type DataShardSpec struct {
 	Rules []ShardingRule `json:"rules"`
 }
@@ -88,6 +90,7 @@ type ReadWriteSplittingGroup struct {
 type DataShardStatus struct {
 }
 
+// +kubebuilder:object:root=true
 type DataShardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
