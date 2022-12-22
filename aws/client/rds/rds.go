@@ -56,6 +56,7 @@ func NewService(sess aws.Config) *service {
 			failoverClusterParam:       &rds.FailoverDBClusterInput{},
 			failoverGlobalClusterParam: &rds.FailoverGlobalClusterInput{},
 			rebootClusterParam:         &rds.RebootDBClusterInput{},
+			describeClusterParam:       &rds.DescribeDBClustersInput{},
 		},
 	}
 }
@@ -214,6 +215,14 @@ type DescInstance struct {
 	ReadReplicaDBInstanceIdentifiers      []string
 	ReadReplicaStatusInfos                []ReadReplicaStatus
 	Endpoint                              Endpoint
+	DBParameterGroups                     []ParameterGroupStatus
+	DBClusterIdentifier                   string
+	ReadReplicaDBClusterIdentifiers       []string
+}
+
+type ParameterGroupStatus struct {
+	Name        string
+	ApplyStatus string
 }
 
 func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
@@ -232,10 +241,7 @@ func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 		desc.Timezone = aws.ToString(output.DBInstances[0].Timezone)
 		desc.SecondaryAZ = aws.ToString(output.DBInstances[0].SecondaryAvailabilityZone)
 		desc.ReadReplicaSourceDBInstanceIdentifier = aws.ToString(output.DBInstances[0].ReadReplicaSourceDBInstanceIdentifier)
-
-		for _, r := range output.DBInstances[0].ReadReplicaDBInstanceIdentifiers {
-			desc.ReadReplicaDBInstanceIdentifiers = append(desc.ReadReplicaDBInstanceIdentifiers, r)
-		}
+		desc.ReadReplicaDBInstanceIdentifiers = output.DBInstances[0].ReadReplicaDBInstanceIdentifiers
 
 		for _, s := range output.DBInstances[0].StatusInfos {
 			desc.ReadReplicaStatusInfos = append(desc.ReadReplicaStatusInfos, ReadReplicaStatus{
@@ -251,9 +257,15 @@ func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 			Port:    aws.ToInt32(&output.DBInstances[0].Endpoint.Port),
 		}
 
-		// desc.ReadReplicaDBClusterIdentifiers = []string{}
-		// desc.DBParameterGroup = aws.ToString(output.DBInstances[0].DBParameterGroups)
-		// desc.DBClusterIdentifier = aws.ToString(output.DBInstances[0].DBClusterIdentifier)
+		for _, g := range output.DBInstances[0].DBParameterGroups {
+			desc.DBParameterGroups = append(desc.DBParameterGroups, ParameterGroupStatus{
+				Name:        aws.ToString(g.DBParameterGroupName),
+				ApplyStatus: aws.ToString(g.ParameterApplyStatus),
+			})
+		}
+
+		desc.ReadReplicaDBClusterIdentifiers = output.DBInstances[0].ReadReplicaDBClusterIdentifiers
+		desc.DBClusterIdentifier = aws.ToString(output.DBInstances[0].DBClusterIdentifier)
 	}
 	return desc, nil
 }
@@ -265,6 +277,7 @@ type rdsCluster struct {
 	failoverClusterParam       *rds.FailoverDBClusterInput
 	failoverGlobalClusterParam *rds.FailoverGlobalClusterInput
 	rebootClusterParam         *rds.RebootDBClusterInput
+	describeClusterParam       *rds.DescribeDBClustersInput
 }
 
 // FailoverClusterInput
@@ -273,6 +286,7 @@ func (s *rdsCluster) SetDBClusterIdentifier(id string) *rdsCluster {
 	s.deleteClusterParam.DBClusterIdentifier = aws.String(id)
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	s.rebootClusterParam.DBClusterIdentifier = aws.String(id)
+	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -388,4 +402,58 @@ func (s *rdsCluster) Delete(ctx context.Context) error {
 func (s *rdsCluster) Reboot(ctx context.Context) error {
 	_, err := s.core.RebootDBCluster(ctx, s.rebootClusterParam)
 	return err
+}
+
+type DescCluster struct {
+	CharSetName                 string
+	ClusterCreateTime           time.Time
+	AvailabilityZones           []string
+	CustomEndpoints             []string
+	DBClusterArn                string
+	DBClusterIdentifier         string
+	DBClusterMembers            []ClusterMember
+	DBClusterParamterGroup      string
+	DeletionProtection          bool
+	PrimaryEndpoint             string
+	ReadReplicaIdentifiers      []string
+	ReaderEndpoint              string
+	ReplicationSourceIdentifier string
+	Status                      string
+}
+
+type ClusterMember struct {
+	DBClusterParameterGroupStatus string
+	DBInstanceIdentifier          string
+	IsClusterWrite                bool
+}
+
+func (s *rdsCluster) Describe(ctx context.Context) (*DescCluster, error) {
+	output, err := s.core.DescribeDBClusters(ctx, s.describeClusterParam)
+	if err != nil {
+		return nil, err
+	}
+	desc := &DescCluster{}
+	if len(output.DBClusters) > 0 {
+		desc.AvailabilityZones = output.DBClusters[0].AvailabilityZones
+		desc.CharSetName = aws.ToString(output.DBClusters[0].CharacterSetName)
+		desc.ClusterCreateTime = aws.ToTime(output.DBClusters[0].ClusterCreateTime)
+		desc.CustomEndpoints = output.DBClusters[0].CustomEndpoints
+		desc.DBClusterArn = aws.ToString(output.DBClusters[0].DBClusterArn)
+		desc.DBClusterIdentifier = aws.ToString(output.DBClusters[0].DBClusterIdentifier)
+		for _, m := range output.DBClusters[0].DBClusterMembers {
+			desc.DBClusterMembers = append(desc.DBClusterMembers, ClusterMember{
+				DBClusterParameterGroupStatus: aws.ToString(m.DBClusterParameterGroupStatus),
+				DBInstanceIdentifier:          aws.ToString(m.DBInstanceIdentifier),
+				IsClusterWrite:                m.IsClusterWriter,
+			})
+		}
+		desc.DBClusterParamterGroup = aws.ToString(output.DBClusters[0].DBClusterParameterGroup)
+		desc.DeletionProtection = aws.ToBool(output.DBClusters[0].DeletionProtection)
+		desc.PrimaryEndpoint = aws.ToString(output.DBClusters[0].Endpoint)
+		desc.ReadReplicaIdentifiers = output.DBClusters[0].ReadReplicaIdentifiers
+		desc.ReaderEndpoint = aws.ToString(output.DBClusters[0].ReaderEndpoint)
+		desc.ReplicationSourceIdentifier = aws.ToString(output.DBClusters[0].ReplicationSourceIdentifier)
+		desc.Status = aws.ToString(output.DBClusters[0].Status)
+	}
+	return desc, nil
 }
