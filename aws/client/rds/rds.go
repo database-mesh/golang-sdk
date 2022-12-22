@@ -74,6 +74,7 @@ type Cluster interface {
 	Create(context.Context) error
 	Delete(context.Context) error
 	Reboot(context.Context) error
+	Describe(context.Context) (*DescCluster, error)
 }
 
 type rdsInstance struct {
@@ -99,6 +100,7 @@ func (s *rdsInstance) SetDBInstanceIdentifier(id string) *rdsInstance {
 	s.createInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.rebootInstanceParam.DBInstanceIdentifier = aws.String(id)
+	s.describeInstanceParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
