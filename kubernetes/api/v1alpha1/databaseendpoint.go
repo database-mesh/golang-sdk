@@ -31,7 +31,7 @@ type DatabaseEndpointList struct {
 // +kubebuilder:resource:shortName="dbep"
 // +kubebuilder:printcolumn:JSONPath=".status.protocol",name=Protocol,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.endpoint",name=Endpoint,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.port",name=Port,type=int32
+// +kubebuilder:printcolumn:JSONPath=".status.port",name=Port,type=integer
 type DatabaseEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
