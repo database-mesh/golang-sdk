@@ -18,6 +18,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName="qc"
 // +kubebuilder:object:root=true
 type QoSClaim struct {
 	metav1.TypeMeta   `json:",inline"`

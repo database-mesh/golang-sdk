@@ -12,6 +12,8 @@ spec:
     kind: DataShard
     listKind: DataShardList
     plural: datashards
+    shortNames:
+    - ds
     singular: datashard
   scope: Namespaced
   versions:
@@ -142,7 +144,6 @@ spec:
                       - tableShardingColumn
                       type: object
                   required:
-                  - actualDatanodes
                   - tableName
                   type: object
                 type: array
@@ -154,3 +155,5 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}

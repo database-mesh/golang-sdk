@@ -17,6 +17,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName="vdb"
 // +kubebuilder:object:root=true
 type VirtualDatabase struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -27,6 +29,7 @@ type VirtualDatabase struct {
 
 // VirtualDatabaseSpec defines the desired state of VirtualDatabase
 type VirtualDatabaseSpec struct {
+	// +optional
 	DatabaseClassName string                   `json:"databaseClassName"`
 	Services          []VirtualDatabaseService `json:"services"`
 }
@@ -35,10 +38,13 @@ type VirtualDatabaseSpec struct {
 type VirtualDatabaseService struct {
 	DatabaseService `json:",inline"`
 
-	Name            string `json:"name"`
+	Name string `json:"name"`
+	// +optional
 	TrafficStrategy string `json:"trafficStrategy"`
-	DataShard       string `json:"dataShard,omitempty"`
-	QoSClaim        string `json:"qosClaim,omitempty"`
+	// +optional
+	DataShard string `json:"dataShard,omitempty"`
+	// +optional
+	QoSClaim string `json:"qosClaim,omitempty"`
 }
 
 // DatabaseService The type of VirtualDatabase that needs to be applied for.
@@ -49,12 +55,15 @@ type DatabaseService struct {
 
 // DatabaseMySQL The type one of VirtualDatabase.Represents a virtual MySQL type
 type DatabaseMySQL struct {
-	Host          string `json:"host,omitempty"`
-	Port          uint32 `json:"port,omitempty"`
-	User          string `json:"user,omitempty"`
-	Password      string `json:"password,omitempty"`
-	DB            string `json:"db,omitempty"`
-	PoolSize      uint32 `json:"poolSize,omitempty"`
+	Host     string `json:"host,omitempty"`
+	Port     uint32 `json:"port,omitempty"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+	// +optional
+	DB string `json:"db,omitempty"`
+	// +optional
+	PoolSize uint32 `json:"poolSize,omitempty"`
+	// +optional
 	ServerVersion string `json:"serverVersion,omitempty"`
 }
 

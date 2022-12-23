@@ -18,6 +18,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName="ds"
 // +kubebuilder:object:root=true
 type DataShard struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -32,12 +34,17 @@ type DataShardSpec struct {
 }
 
 type ShardingRule struct {
-	TableName               string                    `json:"tableName"`
+	TableName string `json:"tableName"`
+	// +optional
 	ReadWriteSplittingGroup []ReadWriteSplittingGroup `json:"readWriteSplittingGroup,omitempty"`
-	ActualDatanodes         ActualDatanodesValue      `json:"actualDatanodes"`
-	TableStrategy           *TableStrategy            `json:"tableStrategy,omitempty"`
-	DatabaseStrategy        *DatabaseStrategy         `json:"databaseStrategy,omitempty"`
-	DatabaseTableStrategy   *DatabaseTableStrategy    `json:"databaseTableStrategy,omitempty"`
+	// +optional
+	ActualDatanodes ActualDatanodesValue `json:"actualDatanodes"`
+	// +optional
+	TableStrategy *TableStrategy `json:"tableStrategy,omitempty"`
+	// +optional
+	DatabaseStrategy *DatabaseStrategy `json:"databaseStrategy,omitempty"`
+	// +optional
+	DatabaseTableStrategy *DatabaseTableStrategy `json:"databaseTableStrategy,omitempty"`
 }
 
 type TableStrategy struct {
@@ -61,8 +68,10 @@ type ActualDatanodesValue struct {
 }
 
 type ValueSourceType struct {
+	// +optional
 	*ActualDatanodesExpressionValue `json:",inline"`
-	*ActualDatanodesNodeValue       `json:",inline"`
+	// +optional
+	*ActualDatanodesNodeValue `json:",inline"`
 }
 
 type ActualDatanodesExpressionValue struct {
@@ -74,7 +83,9 @@ type ActualDatanodesNodeValue struct {
 }
 
 type ValueFrom struct {
-	Value                       string                       `json:"value,omitempty"`
+	// +optional
+	Value string `json:"value,omitempty"`
+	// +optional
 	ValueFromReadWriteSplitting *ValueFromReadWriteSplitting `json:"valueFromReadWriteSplitting,omitempty"`
 }
 

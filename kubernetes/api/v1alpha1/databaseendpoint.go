@@ -27,7 +27,9 @@ type DatabaseEndpointList struct {
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName="dbep"
+// +kubebuilder:printcolumn:JSONPath=".spec.schedule",name=Schedule,type=string
 type DatabaseEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

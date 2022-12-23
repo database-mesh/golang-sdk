@@ -20,6 +20,9 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".spec.schedule",name=Schedule,type=string
+// +kubebuilder:resource:shortName="dbchaos"
 type DatabaseChaos struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -31,7 +34,8 @@ type DatabaseChaosSpec struct {
 	Selector metav1.LabelSelector `json:"selector"`
 	Action   DatabaseChaosAction  `json:"action"`
 	Schedule string               `json:"schedule"`
-	Suspend  bool                 `json:"suspend"`
+	// +optional
+	Suspend bool `json:"suspend"`
 }
 
 type DatabaseChaosAction string
@@ -58,7 +62,7 @@ const (
 type DatabaseChaosCondition struct {
 	Type   DatabaseChaosConditionType `json:"type"`
 	Status corev1.ConditionStatus     `json:"status"`
-	Reason string                     `json:"reason,ommitempty"`
+	Reason string                     `json:"reason,omitempty"`
 }
 
 type DatabaseChaosRecord struct {

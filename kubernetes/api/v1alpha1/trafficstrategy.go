@@ -26,6 +26,8 @@ type TrafficStrategyList struct {
 	Items           []TrafficStrategy `json:"items"`
 }
 
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName="ts"
 // +kubebuilder:object:root=true
 type TrafficStrategy struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -36,21 +38,29 @@ type TrafficStrategy struct {
 
 // TrafficStrategySpec defines the desired state of TrafficStrategy
 type TrafficStrategySpec struct {
-	Selector            *metav1.LabelSelector `json:"selector"`
-	LoadBalance         *LoadBalance          `json:"loadBalance,omitempty"`
-	CircuitBreaks       []CircuitBreak        `json:"circuitBreaks,omitempty"`
-	ConcurrencyControls []ConcurrencyControl  `json:"concurrencyControls,omitempty"`
+	// +optional
+	Selector *metav1.LabelSelector `json:"selector"`
+	// +optional
+	LoadBalance *LoadBalance `json:"loadBalance,omitempty"`
+	// +optional
+	CircuitBreaks []CircuitBreak `json:"circuitBreaks,omitempty"`
+	// +optional
+	ConcurrencyControls []ConcurrencyControl `json:"concurrencyControls,omitempty"`
 }
 
 // LoadBalance The choice of load balancing strategy, currently supported: SimpleLoadBalance
 type LoadBalance struct {
+	// +optional
 	ReadWriteSplitting *ReadWriteSplitting `json:"readWriteSplitting,omitempty"`
-	SimpleLoadBalance  *SimpleLoadBalance  `json:"simpleLoadBalance,omitempty"`
+	// +optional
+	SimpleLoadBalance *SimpleLoadBalance `json:"simpleLoadBalance,omitempty"`
 }
 
 // ReadWriteSplitting support static and dynamic read-write splitting algorithm
 type ReadWriteSplitting struct {
-	Static  *ReadWriteSplittingStatic  `json:"static"`
+	// +optional
+	Static *ReadWriteSplittingStatic `json:"static"`
+	// +optional
 	Dynamic *ReadWriteSplittingDynamic `json:"dynamic"`
 }
 
@@ -80,13 +90,17 @@ type ReadWriteDiscovery struct {
 }
 
 type MasterHighAvailability struct {
-	User                string               `json:"user"`
-	Password            string               `json:"password"`
-	MonitorInterval     uint64               `json:"monitorInterval"`
-	ConnectionProbe     *ConnectionProbe     `json:"connectionProbe"`
-	PingProbe           *PingProbe           `json:"pingProbe"`
+	User            string `json:"user"`
+	Password        string `json:"password"`
+	MonitorInterval uint64 `json:"monitorInterval"`
+	// +optional
+	ConnectionProbe *ConnectionProbe `json:"connectionProbe"`
+	// +optional
+	PingProbe *PingProbe `json:"pingProbe"`
+	// +optional
 	ReplicationLagProbe *ReplicationLagProbe `json:"replicationLagProbe"`
-	ReadOnlyProbe       *ReadOnlyProbe       `json:"readOnlyProbe"`
+	// +optional
+	ReadOnlyProbe *ReadOnlyProbe `json:"readOnlyProbe"`
 }
 
 type ReadOnlyProbe struct {
