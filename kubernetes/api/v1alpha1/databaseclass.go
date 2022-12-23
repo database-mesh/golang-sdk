@@ -16,8 +16,9 @@ package v1alpha1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Cluster,shortName="dc"
 // +kubebuilder:object:root=true
+
 type DatabaseClass struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -47,10 +48,12 @@ const (
 type DatabaseEngine struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
-	Mode    string `json:"mode"`
+	// +optional
+	Mode string `json:"mode"`
 }
 
 type DatabaseInstance struct {
+	// +optional
 	Class string `json:"class"`
 }
 
@@ -60,8 +63,10 @@ const (
 )
 
 type DatabaseStorage struct {
+	// +optional
 	AllocatedStorage int32 `json:"allocatedStorage"`
-	IOPS             int32 `json:"iops"`
+	// +optional
+	IOPS int32 `json:"iops"`
 }
 
 type DatabaseClassStatus struct{}
