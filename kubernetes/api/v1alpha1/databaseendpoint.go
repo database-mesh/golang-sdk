@@ -29,7 +29,9 @@ type DatabaseEndpointList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName="dbep"
-// +kubebuilder:printcolumn:JSONPath=".spec.schedule",name=Schedule,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.protocol",name=Protocol,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.endpoint",name=Endpoint,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.port",name=Port,type=int32
 type DatabaseEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -56,7 +58,11 @@ type MySQL struct {
 	DB       string `json:"db"`
 }
 
-type DatabaseEndpointStatus struct{}
+type DatabaseEndpointStatus struct {
+	Protocol string `json:"protocol"`
+	Endpoint string `json:"endpoint"`
+	Port     string `json:"port"`
+}
 
 func init() {
 	SchemeBuilder.Register(&DatabaseEndpoint{}, &DatabaseEndpointList{})
