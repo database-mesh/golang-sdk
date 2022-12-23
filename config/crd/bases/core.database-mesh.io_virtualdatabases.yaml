@@ -12,6 +12,8 @@ spec:
     kind: VirtualDatabase
     listKind: VirtualDatabaseList
     plural: virtualdatabases
+    shortNames:
+    - vdb
     singular: virtualdatabase
   scope: Namespaced
   versions:
@@ -72,11 +74,9 @@ spec:
                   required:
                   - databaseMySQL
                   - name
-                  - trafficStrategy
                   type: object
                 type: array
             required:
-            - databaseClassName
             - services
             type: object
           status:
@@ -94,3 +94,5 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}

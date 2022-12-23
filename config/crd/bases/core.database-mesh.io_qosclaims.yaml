@@ -12,6 +12,8 @@ spec:
     kind: QoSClaim
     listKind: QoSClaimList
     plural: qosclaims
+    shortNames:
+    - qc
     singular: qosclaim
   scope: Namespaced
   versions:
@@ -55,3 +57,5 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
