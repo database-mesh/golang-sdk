@@ -61,7 +61,7 @@ type MySQL struct {
 type DatabaseEndpointStatus struct {
 	Protocol string `json:"protocol"`
 	Endpoint string `json:"endpoint"`
-	Port     string `json:"port"`
+	Port     int32  `json:"port"`
 }
 
 func init() {

@@ -81,7 +81,8 @@ spec:
               endpoint:
                 type: string
               port:
-                type: string
+                format: int32
+                type: integer
               protocol:
                 type: string
             required:
