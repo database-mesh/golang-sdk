@@ -237,7 +237,6 @@ func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 		desc.CharSetName = aws.ToString(output.DBInstances[0].CharacterSetName)
 		desc.DBInstanceArn = aws.ToString(output.DBInstances[0].DBInstanceArn)
 		desc.DBInstanceIdentifier = aws.ToString(output.DBInstances[0].DBInstanceIdentifier)
-		desc.DBInstanceStatus = aws.ToString(output.DBInstances[0].DBInstanceStatus)
 		desc.DeletionProtection = output.DBInstances[0].DeletionProtection
 		desc.InstanceCreateTime = aws.ToTime(output.DBInstances[0].InstanceCreateTime)
 		desc.Timezone = aws.ToString(output.DBInstances[0].Timezone)
@@ -254,9 +253,15 @@ func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 			})
 		}
 
-		desc.Endpoint = Endpoint{
-			Address: aws.ToString(output.DBInstances[0].Endpoint.Address),
-			Port:    aws.ToInt32(&output.DBInstances[0].Endpoint.Port),
+		if output.DBInstances[0].DBInstanceStatus != nil {
+			desc.DBInstanceStatus = aws.ToString(output.DBInstances[0].DBInstanceStatus)
+		}
+
+		if output.DBInstances[0].Endpoint != nil {
+			desc.Endpoint = Endpoint{
+				Address: aws.ToString(output.DBInstances[0].Endpoint.Address),
+				Port:    aws.ToInt32(&output.DBInstances[0].Endpoint.Port),
+			}
 		}
 
 		for _, g := range output.DBInstances[0].DBParameterGroups {
