@@ -59,6 +59,8 @@ type MySQL struct {
 }
 
 type DatabaseEndpointStatus struct {
+	// +optional
+	Arn      string `json:"arn"`
 	Protocol string `json:"protocol"`
 	Endpoint string `json:"endpoint"`
 	Port     int32  `json:"port"`

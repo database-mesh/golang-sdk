@@ -35,4 +35,4 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." object:headerFile="hack/boilerplate.go.txt" output:crd:artifacts:config=config/crd/bases
