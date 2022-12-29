@@ -30,6 +30,11 @@ type DatabaseChaos struct {
 	Status            DatabaseChaosStatus `json:"status,omitempty"`
 }
 
+// TODO: should move to golang-sdk
+const (
+	AnnotationsNextScheduledChaosTimestamp = "databasechaos.database-mesh.io/next-scheduled-chaos-timestamp"
+)
+
 type DatabaseChaosSpec struct {
 	Selector metav1.LabelSelector `json:"selector"`
 	Action   DatabaseChaosAction  `json:"action"`
@@ -88,4 +93,8 @@ type DatabaseChaosList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DatabaseChaos `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&DatabaseChaos{}, &DatabaseChaos{})
 }
