@@ -96,5 +96,5 @@ type DatabaseChaosList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&DatabaseChaos{}, &DatabaseChaos{})
+	SchemeBuilder.Register(&DatabaseChaos{}, &DatabaseChaosList{})
 }
