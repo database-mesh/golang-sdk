@@ -426,6 +426,7 @@ type DescCluster struct {
 	ReaderEndpoint              string
 	ReplicationSourceIdentifier string
 	Status                      string
+	Port                        int32
 }
 
 type ClusterMember struct {
@@ -460,6 +461,7 @@ func (s *rdsCluster) Describe(ctx context.Context) (*DescCluster, error) {
 		desc.ReadReplicaIdentifiers = output.DBClusters[0].ReadReplicaIdentifiers
 		desc.ReaderEndpoint = aws.ToString(output.DBClusters[0].ReaderEndpoint)
 		desc.ReplicationSourceIdentifier = aws.ToString(output.DBClusters[0].ReplicationSourceIdentifier)
+		desc.Port = aws.ToInt32(output.DBClusters[0].Port)
 		desc.Status = aws.ToString(output.DBClusters[0].Status)
 	}
 	return desc, nil
