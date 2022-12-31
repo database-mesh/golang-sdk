@@ -63,7 +63,7 @@ type DatabaseEndpointStatus struct {
 	Arn      string `json:"arn"`
 	Protocol string `json:"protocol"`
 	Endpoint string `json:"endpoint"`
-	Port     int32  `json:"port"`
+	Port     uint32 `json:"port"`
 }
 
 func init() {
