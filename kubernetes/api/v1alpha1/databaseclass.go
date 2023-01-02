@@ -60,6 +60,7 @@ type DatabaseInstance struct {
 const (
 	AnnotationsVPCSecurityGroupIds = "databaseclass.database-mesh.io/vpc-security-group-ids"
 	AnnotationsSubnetGroupName     = "databaseclass.database-mesh.io/vpc-subnet-group-name"
+	AnnotationsAvailabilityZones   = "databaseclass.database-mesh.io/availability-zones"
 )
 
 type DatabaseStorage struct {
