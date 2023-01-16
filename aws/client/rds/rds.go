@@ -32,11 +32,11 @@ type service struct {
 	cluster  *rdsCluster
 }
 
-func (s *service) Instance() *rdsInstance {
+func (s *service) Instance(context.Context) *rdsInstance {
 	return s.instance
 }
 
-func (s *service) Cluster() *rdsCluster {
+func (s *service) Cluster(context.Context) *rdsCluster {
 	return s.cluster
 }
 
