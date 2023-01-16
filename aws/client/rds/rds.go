@@ -23,8 +23,8 @@ import (
 )
 
 type RDS interface {
-	Instance(context.Context) Instance
-	Cluster(context.Context) Cluster
+	Instance() Instance
+	Cluster() Cluster
 }
 
 type service struct {
@@ -32,11 +32,11 @@ type service struct {
 	cluster  *rdsCluster
 }
 
-func (s *service) Instance(context.Context) Instance {
+func (s *service) Instance() Instance {
 	return s.instance
 }
 
-func (s *service) Cluster(context.Context) Cluster {
+func (s *service) Cluster() Cluster {
 	return s.cluster
 }
 
