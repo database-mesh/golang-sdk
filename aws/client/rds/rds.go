@@ -62,6 +62,24 @@ func NewService(sess aws.Config) *service {
 }
 
 type Instance interface {
+	SetEngine(engine string) Instance
+	SetEngineVersion(version string) Instance
+	SetDBInstanceIdentifier(id string) Instance
+	SetMasterUsername(username string) Instance
+	SetMasterUserPassword(pass string) Instance
+	SetDBInstanceClass(class string) Instance
+	SetAllocatedStorage(size int32) Instance
+	SetIOPS(iops int32) Instance
+	SetDBName(name string) Instance
+	SetVpcSecurityGroupIds(sgs []string) Instance
+	SetDBSubnetGroup(name string) Instance
+	SetMultiAZ(enable bool) Instance
+	SetAvailabilityZones(az string) Instance
+	SetDeleteAutomateBackups(enable bool) Instance
+	SetFinalDBSnapshotIdentifier(id string) Instance
+	SetSkipFinalSnapshot(skip bool) Instance
+	SetForceFailover(force bool) Instance
+
 	Create(context.Context) error
 	Delete(context.Context) error
 	Reboot(context.Context) error
@@ -69,6 +87,25 @@ type Instance interface {
 }
 
 type Cluster interface {
+	SetDBClusterIdentifier(id string) Cluster
+	SetTargetDBInstanceIdentifier(id string) Cluster
+	SetGlobalClusterIdentifier(id string) Cluster
+	SetTargetDbClusterIdentifier(id string) Cluster
+	SetEngine(engine string) Cluster
+	SetAllocatedStorage(size int32) Cluster
+	SetAvailabilityZones(azs []string) Cluster
+	SetDBClusterInstanceClass(class string) Cluster
+	SetDBSubnetGroupName(name string) Cluster
+	SetDatabaseName(name string) Cluster
+	SetEngineVersion(version string) Cluster
+	SetEngineMode(mode string) Cluster
+	SetMasterUsername(username string) Cluster
+	SetMasterUserPassword(pass string) Cluster
+	SetVpcSecurityGroupIds(sgs []string) Cluster
+	SetStorageType(t string) Cluster
+	SetIOPS(iops int32) Cluster
+	SetSkipFinalSnapshot(skip bool) Cluster
+
 	Failover(context.Context) error
 	FailoverGlobal(context.Context) error
 	Create(context.Context) error
@@ -86,17 +123,17 @@ type rdsInstance struct {
 }
 
 // CreateDBInstanceInput
-func (s *rdsInstance) SetEngine(engine string) *rdsInstance {
+func (s *rdsInstance) SetEngine(engine string) Instance {
 	s.createInstanceParam.Engine = aws.String(engine)
 	return s
 }
 
-func (s *rdsInstance) SetEngineVersion(version string) *rdsInstance {
+func (s *rdsInstance) SetEngineVersion(version string) Instance {
 	s.createInstanceParam.EngineVersion = aws.String(version)
 	return s
 }
 
-func (s *rdsInstance) SetDBInstanceIdentifier(id string) *rdsInstance {
+func (s *rdsInstance) SetDBInstanceIdentifier(id string) Instance {
 	s.createInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.rebootInstanceParam.DBInstanceIdentifier = aws.String(id)
@@ -104,52 +141,52 @@ func (s *rdsInstance) SetDBInstanceIdentifier(id string) *rdsInstance {
 	return s
 }
 
-func (s *rdsInstance) SetMasterUsername(username string) *rdsInstance {
+func (s *rdsInstance) SetMasterUsername(username string) Instance {
 	s.createInstanceParam.MasterUsername = aws.String(username)
 	return s
 }
 
-func (s *rdsInstance) SetMasterUserPassword(pass string) *rdsInstance {
+func (s *rdsInstance) SetMasterUserPassword(pass string) Instance {
 	s.createInstanceParam.MasterUserPassword = aws.String(pass)
 	return s
 }
 
-func (s *rdsInstance) SetDBInstanceClass(class string) *rdsInstance {
+func (s *rdsInstance) SetDBInstanceClass(class string) Instance {
 	s.createInstanceParam.DBInstanceClass = aws.String(class)
 	return s
 }
 
-func (s *rdsInstance) SetAllocatedStorage(size int32) *rdsInstance {
+func (s *rdsInstance) SetAllocatedStorage(size int32) Instance {
 	s.createInstanceParam.AllocatedStorage = aws.Int32(size)
 	return s
 }
 
-func (s *rdsInstance) SetIOPS(iops int32) *rdsInstance {
+func (s *rdsInstance) SetIOPS(iops int32) Instance {
 	s.createInstanceParam.Iops = aws.Int32(iops)
 	return s
 }
 
-func (s *rdsInstance) SetDBName(name string) *rdsInstance {
+func (s *rdsInstance) SetDBName(name string) Instance {
 	s.createInstanceParam.DBName = aws.String(name)
 	return s
 }
 
-func (s *rdsInstance) SetVpcSecurityGroupIds(sgs []string) *rdsInstance {
+func (s *rdsInstance) SetVpcSecurityGroupIds(sgs []string) Instance {
 	s.createInstanceParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
-func (s *rdsInstance) SetDBSubnetGroup(name string) *rdsInstance {
+func (s *rdsInstance) SetDBSubnetGroup(name string) Instance {
 	s.createInstanceParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
-func (s *rdsInstance) SetMultiAZ(enable bool) *rdsInstance {
+func (s *rdsInstance) SetMultiAZ(enable bool) Instance {
 	s.createInstanceParam.MultiAZ = aws.Bool(enable)
 	return s
 }
 
-func (s *rdsInstance) SetAvailabilityZones(az string) *rdsInstance {
+func (s *rdsInstance) SetAvailabilityZones(az string) Instance {
 	s.createInstanceParam.AvailabilityZone = aws.String(az)
 	return s
 }
@@ -160,17 +197,17 @@ func (s *rdsInstance) Create(ctx context.Context) error {
 }
 
 // DeleteDBInstanceInput
-func (s *rdsInstance) SetDeleteAutomateBackups(enable bool) *rdsInstance {
+func (s *rdsInstance) SetDeleteAutomateBackups(enable bool) Instance {
 	s.deleteInstanceParam.DeleteAutomatedBackups = aws.Bool(enable)
 	return s
 }
 
-func (s *rdsInstance) SetFinalDBSnapshotIdentifier(id string) *rdsInstance {
+func (s *rdsInstance) SetFinalDBSnapshotIdentifier(id string) Instance {
 	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
-func (s *rdsInstance) SetSkipFinalSnapshot(skip bool) *rdsInstance {
+func (s *rdsInstance) SetSkipFinalSnapshot(skip bool) Instance {
 	s.deleteInstanceParam.SkipFinalSnapshot = skip
 	return s
 }
@@ -182,7 +219,7 @@ func (s *rdsInstance) Delete(ctx context.Context) error {
 
 // NOTE: ForceFailover cannot be specified since the instance is not configured for either MultiAZ or High Availability
 // RebootDBInstanceInput
-func (s *rdsInstance) SetForceFailover(force bool) *rdsInstance {
+func (s *rdsInstance) SetForceFailover(force bool) Instance {
 	s.rebootInstanceParam.ForceFailover = aws.Bool(force)
 	return s
 }
@@ -288,7 +325,7 @@ type rdsCluster struct {
 }
 
 // FailoverClusterInput
-func (s *rdsCluster) SetDBClusterIdentifier(id string) *rdsCluster {
+func (s *rdsCluster) SetDBClusterIdentifier(id string) Cluster {
 	s.createClusterParam.DBClusterIdentifier = aws.String(id)
 	s.deleteClusterParam.DBClusterIdentifier = aws.String(id)
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
@@ -297,7 +334,7 @@ func (s *rdsCluster) SetDBClusterIdentifier(id string) *rdsCluster {
 	return s
 }
 
-func (s *rdsCluster) SetTargetDBInstanceIdentifier(id string) *rdsCluster {
+func (s *rdsCluster) SetTargetDBInstanceIdentifier(id string) Cluster {
 	s.failoverClusterParam.TargetDBInstanceIdentifier = aws.String(id)
 	return s
 }
@@ -308,12 +345,12 @@ func (s *rdsCluster) Failover(ctx context.Context) error {
 }
 
 // FailoverGlobalClusterInput
-func (s *rdsCluster) SetGlobalClusterIdentifier(id string) *rdsCluster {
+func (s *rdsCluster) SetGlobalClusterIdentifier(id string) Cluster {
 	s.failoverGlobalClusterParam.GlobalClusterIdentifier = aws.String(id)
 	return s
 }
 
-func (s *rdsCluster) SetTargetDbClusterIdentifier(id string) *rdsCluster {
+func (s *rdsCluster) SetTargetDbClusterIdentifier(id string) Cluster {
 	s.failoverGlobalClusterParam.TargetDbClusterIdentifier = aws.String(id)
 	return s
 }
@@ -324,67 +361,67 @@ func (s *rdsCluster) FailoverGlobal(ctx context.Context) error {
 }
 
 // CreateDBClusterInput
-func (s *rdsCluster) SetEngine(engine string) *rdsCluster {
+func (s *rdsCluster) SetEngine(engine string) Cluster {
 	s.createClusterParam.Engine = aws.String(engine)
 	return s
 }
 
-func (s *rdsCluster) SetAllocatedStorage(size int32) *rdsCluster {
+func (s *rdsCluster) SetAllocatedStorage(size int32) Cluster {
 	s.createClusterParam.AllocatedStorage = aws.Int32(size)
 	return s
 }
 
-func (s *rdsCluster) SetAvailabilityZones(azs []string) *rdsCluster {
+func (s *rdsCluster) SetAvailabilityZones(azs []string) Cluster {
 	s.createClusterParam.AvailabilityZones = azs
 	return s
 }
 
-func (s *rdsCluster) SetDBClusterInstanceClass(class string) *rdsCluster {
+func (s *rdsCluster) SetDBClusterInstanceClass(class string) Cluster {
 	s.createClusterParam.DBClusterInstanceClass = aws.String(class)
 	return s
 }
 
-func (s *rdsCluster) SetDBSubnetGroupName(name string) *rdsCluster {
+func (s *rdsCluster) SetDBSubnetGroupName(name string) Cluster {
 	s.createClusterParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
-func (s *rdsCluster) SetDatabaseName(name string) *rdsCluster {
+func (s *rdsCluster) SetDatabaseName(name string) Cluster {
 	s.createClusterParam.DatabaseName = aws.String(name)
 	return s
 }
 
-func (s *rdsCluster) SetEngineVersion(version string) *rdsCluster {
+func (s *rdsCluster) SetEngineVersion(version string) Cluster {
 	s.createClusterParam.EngineVersion = aws.String(version)
 	return s
 }
 
-func (s *rdsCluster) SetEngineMode(mode string) *rdsCluster {
+func (s *rdsCluster) SetEngineMode(mode string) Cluster {
 	s.createClusterParam.EngineMode = aws.String(mode)
 	return s
 }
 
-func (s *rdsCluster) SetMasterUsername(username string) *rdsCluster {
+func (s *rdsCluster) SetMasterUsername(username string) Cluster {
 	s.createClusterParam.MasterUsername = aws.String(username)
 	return s
 }
 
-func (s *rdsCluster) SetMasterUserPassword(pass string) *rdsCluster {
+func (s *rdsCluster) SetMasterUserPassword(pass string) Cluster {
 	s.createClusterParam.MasterUserPassword = aws.String(pass)
 	return s
 }
 
-func (s *rdsCluster) SetVpcSecurityGroupIds(sgs []string) *rdsCluster {
+func (s *rdsCluster) SetVpcSecurityGroupIds(sgs []string) Cluster {
 	s.createClusterParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
-func (s *rdsCluster) SetStorageType(t string) *rdsCluster {
+func (s *rdsCluster) SetStorageType(t string) Cluster {
 	s.createClusterParam.StorageType = aws.String(t)
 	return s
 }
 
-func (s *rdsCluster) SetIOPS(ps int32) *rdsCluster {
+func (s *rdsCluster) SetIOPS(ps int32) Cluster {
 	s.createClusterParam.Iops = aws.Int32(ps)
 	return s
 }
@@ -395,7 +432,7 @@ func (s *rdsCluster) Create(ctx context.Context) error {
 }
 
 // DeleteDBClusterInput
-func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) *rdsCluster {
+func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) Cluster {
 	s.deleteClusterParam.SkipFinalSnapshot = *aws.Bool(skip)
 	return s
 }
