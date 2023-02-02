@@ -43,11 +43,12 @@ func (s *service) Cluster() Cluster {
 func NewService(sess aws.Config) *service {
 	return &service{
 		instance: &rdsInstance{
-			core:                  rds.NewFromConfig(sess),
-			createInstanceParam:   &rds.CreateDBInstanceInput{},
-			deleteInstanceParam:   &rds.DeleteDBInstanceInput{},
-			rebootInstanceParam:   &rds.RebootDBInstanceInput{},
-			describeInstanceParam: &rds.DescribeDBInstancesInput{},
+			core:                     rds.NewFromConfig(sess),
+			createInstanceParam:      &rds.CreateDBInstanceInput{},
+			deleteInstanceParam:      &rds.DeleteDBInstanceInput{},
+			rebootInstanceParam:      &rds.RebootDBInstanceInput{},
+			describeInstanceParam:    &rds.DescribeDBInstancesInput{},
+			restoreInstancePitrParam: &rds.RestoreDBInstanceToPointInTimeInput{},
 		},
 		cluster: &rdsCluster{
 			core:                       rds.NewFromConfig(sess),
@@ -57,6 +58,7 @@ func NewService(sess aws.Config) *service {
 			failoverGlobalClusterParam: &rds.FailoverGlobalClusterInput{},
 			rebootClusterParam:         &rds.RebootDBClusterInput{},
 			describeClusterParam:       &rds.DescribeDBClustersInput{},
+			restoreDBClusterPitrParam:  &rds.RestoreDBClusterToPointInTimeInput{},
 		},
 	}
 }
