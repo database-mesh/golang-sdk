@@ -79,11 +79,18 @@ type Instance interface {
 	SetFinalDBSnapshotIdentifier(id string) Instance
 	SetSkipFinalSnapshot(skip bool) Instance
 	SetForceFailover(force bool) Instance
+	SetTargetDBInstanceIdentifier(id string) Instance
+	SetRestoreTime(rt *time.Time) Instance
+	SetSourceDBInstanceAutomatedBackupsArn(arn string) Instance
+	SetSourceDBInstanceIdentifier(id string) Instance
+	SetSourceDBiResourceId(dbi string) Instance
+	SetUseLatestRestorableTime(enable bool) Instance
 
 	Create(context.Context) error
 	Delete(context.Context) error
 	Reboot(context.Context) error
 	Describe(context.Context) (*DescInstance, error)
+	RestorePitr(context.Context) error
 }
 
 type Cluster interface {
@@ -105,6 +112,11 @@ type Cluster interface {
 	SetStorageType(t string) Cluster
 	SetIOPS(iops int32) Cluster
 	SetSkipFinalSnapshot(skip bool) Cluster
+	SetSourceDBClusterIdentifier(sid string) Cluster
+	SetBacktraceWindow(w int64) Cluster
+	SetRestoreToTime(rt *time.Time) Cluster
+	SetRestoreType(t string) Cluster
+	SetUseLatestRestorableTime(enable bool) Cluster
 
 	Failover(context.Context) error
 	FailoverGlobal(context.Context) error
@@ -112,14 +124,16 @@ type Cluster interface {
 	Delete(context.Context) error
 	Reboot(context.Context) error
 	Describe(context.Context) (*DescCluster, error)
+	RestorePitr(context.Context) error
 }
 
 type rdsInstance struct {
-	core                  *rds.Client
-	createInstanceParam   *rds.CreateDBInstanceInput
-	deleteInstanceParam   *rds.DeleteDBInstanceInput
-	rebootInstanceParam   *rds.RebootDBInstanceInput
-	describeInstanceParam *rds.DescribeDBInstancesInput
+	core                     *rds.Client
+	createInstanceParam      *rds.CreateDBInstanceInput
+	deleteInstanceParam      *rds.DeleteDBInstanceInput
+	rebootInstanceParam      *rds.RebootDBInstanceInput
+	describeInstanceParam    *rds.DescribeDBInstancesInput
+	restoreInstancePitrParam *rds.RestoreDBInstanceToPointInTimeInput
 }
 
 // CreateDBInstanceInput
@@ -153,41 +167,49 @@ func (s *rdsInstance) SetMasterUserPassword(pass string) Instance {
 
 func (s *rdsInstance) SetDBInstanceClass(class string) Instance {
 	s.createInstanceParam.DBInstanceClass = aws.String(class)
+	s.restoreInstancePitrParam.DBInstanceClass = aws.String(class)
 	return s
 }
 
 func (s *rdsInstance) SetAllocatedStorage(size int32) Instance {
 	s.createInstanceParam.AllocatedStorage = aws.Int32(size)
+	// s.restoreInstancePitrParam.MaxAllocatedStorage = aws.Int32(size)
 	return s
 }
 
 func (s *rdsInstance) SetIOPS(iops int32) Instance {
 	s.createInstanceParam.Iops = aws.Int32(iops)
+	s.restoreInstancePitrParam.Iops = aws.Int32(iops)
 	return s
 }
 
 func (s *rdsInstance) SetDBName(name string) Instance {
 	s.createInstanceParam.DBName = aws.String(name)
+	s.restoreInstancePitrParam.DBName = aws.String(name)
 	return s
 }
 
 func (s *rdsInstance) SetVpcSecurityGroupIds(sgs []string) Instance {
 	s.createInstanceParam.VpcSecurityGroupIds = sgs
+	s.restoreInstancePitrParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
 func (s *rdsInstance) SetDBSubnetGroup(name string) Instance {
 	s.createInstanceParam.DBSubnetGroupName = aws.String(name)
+	s.restoreInstancePitrParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
 func (s *rdsInstance) SetMultiAZ(enable bool) Instance {
 	s.createInstanceParam.MultiAZ = aws.Bool(enable)
+	s.restoreInstancePitrParam.MultiAZ = aws.Bool(enable)
 	return s
 }
 
 func (s *rdsInstance) SetAvailabilityZones(az string) Instance {
 	s.createInstanceParam.AvailabilityZone = aws.String(az)
+	s.restoreInstancePitrParam.AvailabilityZone = aws.String(az)
 	return s
 }
 
@@ -227,6 +249,51 @@ func (s *rdsInstance) SetForceFailover(force bool) Instance {
 // NOTE: Can only reboot db instances with state in: available, storage-optimization, incompatible-credentials, incompatible-parameters.
 func (s *rdsInstance) Reboot(ctx context.Context) error {
 	_, err := s.core.RebootDBInstance(ctx, s.rebootInstanceParam)
+	return err
+}
+
+func (s *rdsInstance) SetTargetDBInstanceIdentifier(tid string) Instance {
+	s.restoreInstancePitrParam.TargetDBInstanceIdentifier = aws.String(tid)
+	return s
+}
+
+// func (s *rdsInstance) SetAutoMinorVersionUpgrade(enable bool) Instance {
+// 	s.restoreInstancePitrParam.AutoMinorVersionUpgrade = aws.Bool(enable)
+// 	return s
+// }
+
+// func (s *rdsInstance) SetBackupTarget(target string) Instance {
+// 	s.restoreInstancePitrParam.BackupTarget = aws.String(target)
+// 	return s
+// }
+
+func (s *rdsInstance) SetRestoreTime(rt *time.Time) Instance {
+	s.restoreInstancePitrParam.RestoreTime = rt
+	return s
+}
+
+func (s *rdsInstance) SetSourceDBInstanceAutomatedBackupsArn(arn string) Instance {
+	s.restoreInstancePitrParam.SourceDBInstanceAutomatedBackupsArn = aws.String(arn)
+	return s
+}
+
+func (s *rdsInstance) SetSourceDBInstanceIdentifier(sid string) Instance {
+	s.restoreInstancePitrParam.SourceDBInstanceIdentifier = aws.String(sid)
+	return s
+}
+
+func (s *rdsInstance) SetSourceDBiResourceId(dbi string) Instance {
+	s.restoreInstancePitrParam.SourceDbiResourceId = aws.String(dbi)
+	return s
+}
+
+func (s *rdsInstance) SetUseLatestRestorableTime(enable bool) Instance {
+	s.restoreInstancePitrParam.UseLatestRestorableTime = enable
+	return s
+}
+
+func (s *rdsInstance) RestorePitr(ctx context.Context) error {
+	_, err := s.core.RestoreDBInstanceToPointInTime(ctx, s.restoreInstancePitrParam)
 	return err
 }
 
@@ -322,6 +389,7 @@ type rdsCluster struct {
 	failoverGlobalClusterParam *rds.FailoverGlobalClusterInput
 	rebootClusterParam         *rds.RebootDBClusterInput
 	describeClusterParam       *rds.DescribeDBClustersInput
+	restoreDBClusterPitrParam  *rds.RestoreDBClusterToPointInTimeInput
 }
 
 // FailoverClusterInput
@@ -331,6 +399,7 @@ func (s *rdsCluster) SetDBClusterIdentifier(id string) Cluster {
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	s.rebootClusterParam.DBClusterIdentifier = aws.String(id)
 	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
+	s.restoreDBClusterPitrParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -378,11 +447,13 @@ func (s *rdsCluster) SetAvailabilityZones(azs []string) Cluster {
 
 func (s *rdsCluster) SetDBClusterInstanceClass(class string) Cluster {
 	s.createClusterParam.DBClusterInstanceClass = aws.String(class)
+	s.restoreDBClusterPitrParam.DBClusterInstanceClass = aws.String(class)
 	return s
 }
 
 func (s *rdsCluster) SetDBSubnetGroupName(name string) Cluster {
 	s.createClusterParam.DBSubnetGroupName = aws.String(name)
+	s.restoreDBClusterPitrParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
@@ -423,6 +494,7 @@ func (s *rdsCluster) SetStorageType(t string) Cluster {
 
 func (s *rdsCluster) SetIOPS(ps int32) Cluster {
 	s.createClusterParam.Iops = aws.Int32(ps)
+	s.restoreDBClusterPitrParam.Iops = aws.Int32(ps)
 	return s
 }
 
@@ -445,6 +517,36 @@ func (s *rdsCluster) Delete(ctx context.Context) error {
 // RebootDBClusterInput
 func (s *rdsCluster) Reboot(ctx context.Context) error {
 	_, err := s.core.RebootDBCluster(ctx, s.rebootClusterParam)
+	return err
+}
+
+func (s *rdsCluster) SetSourceDBClusterIdentifier(sid string) Cluster {
+	s.restoreDBClusterPitrParam.SourceDBClusterIdentifier = aws.String(sid)
+	return s
+}
+
+func (s *rdsCluster) SetBacktraceWindow(w int64) Cluster {
+	s.restoreDBClusterPitrParam.BacktrackWindow = aws.Int64(w)
+	return s
+}
+
+func (s *rdsCluster) SetRestoreToTime(rt *time.Time) Cluster {
+	s.restoreDBClusterPitrParam.RestoreToTime = rt
+	return s
+}
+
+func (s *rdsCluster) SetRestoreType(t string) Cluster {
+	s.restoreDBClusterPitrParam.RestoreType = aws.String(t)
+	return s
+}
+
+func (s *rdsCluster) SetUseLatestRestorableTime(enable bool) Cluster {
+	s.restoreDBClusterPitrParam.UseLatestRestorableTime = enable
+	return s
+}
+
+func (s *rdsCluster) RestorePitr(ctx context.Context) error {
+	_, err := s.core.RestoreDBClusterToPointInTime(ctx, s.restoreDBClusterPitrParam)
 	return err
 }
 
