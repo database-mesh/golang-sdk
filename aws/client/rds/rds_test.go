@@ -292,3 +292,65 @@ func Test_DescribeRDSAurora(t *testing.T) {
 	t.Logf("%+v\n", *output.DBClusters[0].ReaderEndpoint)
 	// t.Logf("%+v\n", *output.DBClusters[0].PubliclyAccessible)
 }
+
+func Test_CreateAuroraWithPrimary(t *testing.T) {
+	region, _ := os.LookupEnv(EnvAWSRegion)
+	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
+	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+
+	err := NewService(sess[region]).Aurora().
+		SetEngine("aurora-mysql").
+		SetEngineVersion("5.7.mysql_aurora.2.07.0").
+		SetDBClusterIdentifier("foo").
+		SetVpcSecurityGroupIds([]string{TestVpcSecurityGroupId}).
+		SetDBSubnetGroup("test").
+		SetDBInstanceIdentifier("foo-instance-1").
+		SetDBInstanceClass("db.r5.large").
+		SetMasterUsername("admin").
+		SetMasterUserPassword("admin123").
+		CreateWithPrimary(context.TODO())
+
+	if err != nil {
+		t.Fatalf("%+v\n", err)
+	}
+
+	t.Logf("succ\n")
+}
+
+func Test_FailoverPrimary(t *testing.T) {
+	region, _ := os.LookupEnv(EnvAWSRegion)
+	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
+	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+
+	err := NewService(sess[region]).Aurora().
+		SetDBClusterIdentifier("test").
+		FailoverPrimary(context.TODO())
+
+	if err != nil {
+		t.Fatalf("%+v\n", err)
+	}
+
+	t.Logf("succ\n")
+}
+
+func Test_DeleteAurora(t *testing.T) {
+	region, _ := os.LookupEnv(EnvAWSRegion)
+	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
+	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+
+	err := NewService(sess[region]).Aurora().
+		SetDBInstanceIdentifier("foo-instance-1").
+		SetDBClusterIdentifier("foo").
+		SetSkipFinalSnapshot(true).
+		SetDeleteAutomateBackups(false).
+		Delete(context.TODO())
+
+	if err != nil {
+		t.Fatalf("%+v\n", err)
+	}
+
+	t.Logf("succ\n")
+}

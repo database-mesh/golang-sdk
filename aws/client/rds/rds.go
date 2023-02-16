@@ -22,11 +22,13 @@ import (
 type RDS interface {
 	Instance() Instance
 	Cluster() Cluster
+	Aurora() Aurora
 }
 
 type service struct {
 	instance *rdsInstance
 	cluster  *rdsCluster
+	aurora   *rdsAurora
 }
 
 func (s *service) Instance() Instance {
@@ -35,6 +37,10 @@ func (s *service) Instance() Instance {
 
 func (s *service) Cluster() Cluster {
 	return s.cluster
+}
+
+func (s *service) Aurora() Aurora {
+	return s.aurora
 }
 
 func NewService(sess aws.Config) *service {
@@ -56,6 +62,21 @@ func NewService(sess aws.Config) *service {
 			rebootClusterParam:         &rds.RebootDBClusterInput{},
 			describeClusterParam:       &rds.DescribeDBClustersInput{},
 			restoreDBClusterPitrParam:  &rds.RestoreDBClusterToPointInTimeInput{},
+		},
+		aurora: &rdsAurora{
+			core:                       rds.NewFromConfig(sess),
+			createClusterParam:         &rds.CreateDBClusterInput{},
+			deleteClusterParam:         &rds.DeleteDBClusterInput{},
+			failoverClusterParam:       &rds.FailoverDBClusterInput{},
+			failoverGlobalClusterParam: &rds.FailoverGlobalClusterInput{},
+			rebootClusterParam:         &rds.RebootDBClusterInput{},
+			describeClusterParam:       &rds.DescribeDBClustersInput{},
+			restoreDBClusterPitrParam:  &rds.RestoreDBClusterToPointInTimeInput{},
+			createInstanceParam:        &rds.CreateDBInstanceInput{},
+			deleteInstanceParam:        &rds.DeleteDBInstanceInput{},
+			rebootInstanceParam:        &rds.RebootDBInstanceInput{},
+			describeInstanceParam:      &rds.DescribeDBInstancesInput{},
+			restoreInstancePitrParam:   &rds.RestoreDBInstanceToPointInTimeInput{},
 		},
 	}
 }
