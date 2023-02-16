@@ -87,6 +87,9 @@ type Instance interface {
 	SetSourceDBInstanceIdentifier(id string) Instance
 	SetSourceDBiResourceId(dbi string) Instance
 	SetUseLatestRestorableTime(enable bool) Instance
+	SetDBClusterIdentifier(id string) Instance
+	SetPublicAccessible(enable bool) Instance
+	SetLicenseModel(model string) Instance
 
 	Create(context.Context) error
 	Delete(context.Context) error
@@ -119,6 +122,7 @@ type Cluster interface {
 	SetRestoreToTime(rt *time.Time) Cluster
 	SetRestoreType(t string) Cluster
 	SetUseLatestRestorableTime(enable bool) Cluster
+	SetPublicAccessible(enable bool) Cluster
 
 	Failover(context.Context) error
 	FailoverGlobal(context.Context) error
@@ -291,6 +295,21 @@ func (s *rdsInstance) SetSourceDBiResourceId(dbi string) Instance {
 
 func (s *rdsInstance) SetUseLatestRestorableTime(enable bool) Instance {
 	s.restoreInstancePitrParam.UseLatestRestorableTime = enable
+	return s
+}
+
+func (s *rdsInstance) SetDBClusterIdentifier(id string) Instance {
+	s.createInstanceParam.DBClusterIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) SetPublicAccessible(enable bool) Instance {
+	s.createInstanceParam.PubliclyAccessible = aws.Bool(enable)
+	return s
+}
+
+func (s *rdsInstance) SetLicenseModel(model string) Instance {
+	s.createInstanceParam.LicenseModel = aws.String(model)
 	return s
 }
 
@@ -507,7 +526,12 @@ func (s *rdsCluster) Create(ctx context.Context) error {
 
 // DeleteDBClusterInput
 func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) Cluster {
-	s.deleteClusterParam.SkipFinalSnapshot = *aws.Bool(skip)
+	s.deleteClusterParam.SkipFinalSnapshot = skip
+	return s
+}
+
+func (s *rdsCluster) SetPublicAccessible(enable bool) Cluster {
+	s.createClusterParam.PubliclyAccessible = aws.Bool(enable)
 	return s
 }
 
