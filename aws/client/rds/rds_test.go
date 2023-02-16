@@ -32,10 +32,10 @@ const (
 	TestAWSRegion          = "region-test"
 	TestAWSAccessKey       = "ak-test"
 	TestAWSSecretAccessKey = "sk-test"
-	TestSubnetGroup        = "sng-test"
-	TestVpcSecurityGroupId = "sg-id"
+	TestSubnetGroup        = "test"
+	TestVpcSecurityGroupId = "sg-008e74936b3f9de19"
 	TestDBName             = "foo"
-	TestDBPass             = "foo"
+	TestDBPass             = "admin123"
 	TestDBIdentifier       = "foo"
 )
 
@@ -109,7 +109,7 @@ func Test_DeleteRDSInstance(t *testing.T) {
 	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
 	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
-	err := NewService(sess[region]).Instance().SetDBInstanceIdentifier(TestDBIdentifier).SetSkipFinalSnapshot(true).SetDeleteAutomateBackups(false).Delete(context.TODO())
+	err := NewService(sess[region]).Instance().SetDBInstanceIdentifier("foo2-instance-1").SetSkipFinalSnapshot(true).SetDeleteAutomateBackups(false).Delete(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
 	}
@@ -172,7 +172,7 @@ func Test_DeleteRDSCluster(t *testing.T) {
 	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
 	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
-	err := NewService(sess[region]).Cluster().SetDBClusterIdentifier(TestDBIdentifier).SetSkipFinalSnapshot(true).Delete(context.TODO())
+	err := NewService(sess[region]).Cluster().SetDBClusterIdentifier("foo2").SetSkipFinalSnapshot(true).Delete(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
 	}
@@ -197,7 +197,7 @@ func Test_DescribeRDSCluster(t *testing.T) {
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
 	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
 	output, err := NewService(sess[region]).Cluster().
-		SetDBClusterIdentifier(TestDBIdentifier).
+		SetDBClusterIdentifier("test").
 		Describe(context.TODO())
 
 	if err != nil {
@@ -212,7 +212,7 @@ func Test_CreateRDSSubnetsGroup(t *testing.T) {
 	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
 	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
-	client := NewService(sess[region]).Cluster().core
+	client := NewService(sess[region]).cluster.core
 	snginput := &rds.CreateDBSubnetGroupInput{
 		SubnetIds:                []string{"subnet-gg", "subnet-gg", "subnet-gg"},
 		DBSubnetGroupName:        aws.String("test"),
@@ -230,26 +230,40 @@ func Test_CreateRDSAurora(t *testing.T) {
 	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
 	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+
 	err := NewService(sess[region]).Cluster().
 		SetEngine("aurora-mysql").
-		SetEngineVersion("8.0.mysql_aurora.3.02.0").
-		SetEngineMode("provisioned").
-		SetDBClusterIdentifier(TestDBIdentifier).
+		SetEngineVersion("5.7.mysql_aurora.2.07.0").
+		SetDBClusterIdentifier("foo2").
 		SetMasterUsername("admin").
 		SetMasterUserPassword(TestDBPass).
-		// SetDBClusterInstanceClass("db.r5.xlarge").
-		// SetAllocatedStorage(100).
-		SetDatabaseName(TestDBName).
 		SetVpcSecurityGroupIds([]string{TestVpcSecurityGroupId}).
-		// SetStorageType("gp2").
-		// SetIOPS(1000).
 		SetDBSubnetGroupName("test").
-		SetAvailabilityZones([]string{"ap-southeast-1a", "ap-southeast-1c", "ap-southeast-1d"}).
+		// SetAvailabilityZones([]string{"ap-southeast-1a", "ap-southeast-1c", "ap-southeast-1b"}).
 		Create(context.TODO())
 
 	if err != nil {
 		t.Fatalf("%+v\n", err)
 	}
+}
+
+func Test_CreateRDSInstanceForAurora(t *testing.T) {
+	region, _ := os.LookupEnv(EnvAWSRegion)
+	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
+	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	err := NewService(sess[region]).Instance().
+		SetEngine("aurora-mysql").
+		SetDBInstanceIdentifier("foo2-instance-1").
+		SetDBInstanceClass("db.r5.large").
+		SetPublicAccessible(true).
+		SetDBClusterIdentifier("foo2").
+		Create(context.TODO())
+
+	if err != nil {
+		t.Fatalf("%+v\n", err)
+	}
+
 	t.Logf("succ\n")
 }
 
