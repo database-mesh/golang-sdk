@@ -39,6 +39,10 @@ type DatabaseEndpoint struct {
 	Status            DatabaseEndpointStatus `json:"status,omitempty"`
 }
 
+const (
+    AnnotationsDatabaseClassName = "databaseendpoint.database-mesh.io/databaseclass"
+)
+
 // DatabaseEndpointSpec defines the desired state of DatabaseEndpoint
 type DatabaseEndpointSpec struct {
 	Database Database `json:"database"`
