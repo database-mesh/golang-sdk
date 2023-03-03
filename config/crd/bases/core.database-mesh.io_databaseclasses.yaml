@@ -60,6 +60,8 @@ spec:
                 type: boolean
               provisioner:
                 type: string
+              publicAccessible:
+                type: boolean
               storage:
                 properties:
                   allocatedStorage:
@@ -76,6 +78,7 @@ spec:
             - instance
             - multiAZ
             - provisioner
+            - publicAccessible
             - storage
             type: object
           status:
