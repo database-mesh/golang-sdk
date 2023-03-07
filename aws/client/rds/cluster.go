@@ -47,6 +47,7 @@ type Cluster interface {
 	SetRestoreType(t string) Cluster
 	SetUseLatestRestorableTime(enable bool) Cluster
 	SetPublicAccessible(enable bool) Cluster
+	SetSnapshotIdentifier(id string) Cluster
 
 	Failover(context.Context) error
 	FailoverGlobal(context.Context) error
@@ -55,17 +56,19 @@ type Cluster interface {
 	Reboot(context.Context) error
 	Describe(context.Context) (*DescCluster, error)
 	RestorePitr(context.Context) error
+	CreateSnapshot(context.Context) error
 }
 
 type rdsCluster struct {
-	core                       *rds.Client
-	createClusterParam         *rds.CreateDBClusterInput
-	deleteClusterParam         *rds.DeleteDBClusterInput
-	failoverClusterParam       *rds.FailoverDBClusterInput
-	failoverGlobalClusterParam *rds.FailoverGlobalClusterInput
-	rebootClusterParam         *rds.RebootDBClusterInput
-	describeClusterParam       *rds.DescribeDBClustersInput
-	restoreDBClusterPitrParam  *rds.RestoreDBClusterToPointInTimeInput
+	core                         *rds.Client
+	createClusterParam           *rds.CreateDBClusterInput
+	deleteClusterParam           *rds.DeleteDBClusterInput
+	failoverClusterParam         *rds.FailoverDBClusterInput
+	failoverGlobalClusterParam   *rds.FailoverGlobalClusterInput
+	rebootClusterParam           *rds.RebootDBClusterInput
+	describeClusterParam         *rds.DescribeDBClustersInput
+	restoreDBClusterPitrParam    *rds.RestoreDBClusterToPointInTimeInput
+	createDBClusterSnapshotParam *rds.CreateDBClusterSnapshotInput
 }
 
 // FailoverClusterInput
@@ -76,6 +79,7 @@ func (s *rdsCluster) SetDBClusterIdentifier(id string) Cluster {
 	s.rebootClusterParam.DBClusterIdentifier = aws.String(id)
 	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
 	s.restoreDBClusterPitrParam.DBClusterIdentifier = aws.String(id)
+	s.createDBClusterSnapshotParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -228,6 +232,16 @@ func (s *rdsCluster) SetUseLatestRestorableTime(enable bool) Cluster {
 
 func (s *rdsCluster) RestorePitr(ctx context.Context) error {
 	_, err := s.core.RestoreDBClusterToPointInTime(ctx, s.restoreDBClusterPitrParam)
+	return err
+}
+
+func (s *rdsCluster) SetSnapshotIdentifier(id string) Cluster {
+	s.createDBClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsCluster) CreateSnapshot(ctx context.Context) error {
+	_, err := s.core.CreateDBClusterSnapshot(ctx, s.createDBClusterSnapshotParam)
 	return err
 }
 

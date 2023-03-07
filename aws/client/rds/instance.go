@@ -49,12 +49,14 @@ type Instance interface {
 	SetDBClusterIdentifier(id string) Instance
 	SetPublicAccessible(enable bool) Instance
 	SetLicenseModel(model string) Instance
+	SetSnapshotIdentifier(id string) Instance
 
 	Create(context.Context) error
 	Delete(context.Context) error
 	Reboot(context.Context) error
 	Describe(context.Context) (*DescInstance, error)
 	RestorePitr(context.Context) error
+	CreateSnapshot(context.Context) error
 }
 
 type rdsInstance struct {
@@ -64,6 +66,7 @@ type rdsInstance struct {
 	rebootInstanceParam      *rds.RebootDBInstanceInput
 	describeInstanceParam    *rds.DescribeDBInstancesInput
 	restoreInstancePitrParam *rds.RestoreDBInstanceToPointInTimeInput
+	createSnapshotParam      *rds.CreateDBSnapshotInput
 }
 
 // CreateDBInstanceInput
@@ -82,6 +85,7 @@ func (s *rdsInstance) SetDBInstanceIdentifier(id string) Instance {
 	s.deleteInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.rebootInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.describeInstanceParam.DBInstanceIdentifier = aws.String(id)
+	s.createSnapshotParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
@@ -239,6 +243,16 @@ func (s *rdsInstance) SetLicenseModel(model string) Instance {
 
 func (s *rdsInstance) RestorePitr(ctx context.Context) error {
 	_, err := s.core.RestoreDBInstanceToPointInTime(ctx, s.restoreInstancePitrParam)
+	return err
+}
+
+func (s *rdsInstance) SetSnapshotIdentifier(id string) Instance {
+	s.createSnapshotParam.DBSnapshotIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsInstance) CreateSnapshot(ctx context.Context) error {
+	_, err := s.core.CreateDBSnapshot(ctx, s.createSnapshotParam)
 	return err
 }
 
