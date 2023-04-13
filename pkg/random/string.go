@@ -39,24 +39,13 @@ func randomStringWithLen(length int, chars []byte) string {
 	if clen < 2 || clen > 256 {
 		return ""
 	}
-	maxrb := 255 - (256 % clen)
-	b := make([]byte, length)
-	r := make([]byte, length+(length/4)) // storage for random bytes.
-	i := 0
-	for {
-		if _, err := rand.Read(r); err != nil {
-			return ""
-		}
-		for _, rb := range r {
-			c := int(rb)
-			if c > maxrb {
-				continue // Skip this number to avoid modulo bias.
-			}
-			b[i] = chars[c%clen]
-			i++
-			if i == length {
-				return string(b)
-			}
-		}
+
+	bs := make([]byte, length)
+	for i := 0; i < length; i++ {
+		_, _ = rand.Read(bs[i : i+1])
 	}
+	for k, v := range bs {
+		bs[k] = chars[v%byte(clen)]
+	}
+	return string(bs)
 }

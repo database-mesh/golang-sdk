@@ -1,3 +1,6 @@
 vendor
 .idea
 bin
+
+pkg/boltdb/bolt.db
+pkg/logger/*.log
