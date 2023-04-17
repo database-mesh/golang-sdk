@@ -20,6 +20,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 )
 
 type Instance interface {
@@ -67,6 +68,40 @@ type rdsInstance struct {
 	describeInstanceParam    *rds.DescribeDBInstancesInput
 	restoreInstancePitrParam *rds.RestoreDBInstanceToPointInTimeInput
 	createSnapshotParam      *rds.CreateDBSnapshotInput
+}
+
+type ReadReplicaStatus struct {
+	Message    string
+	Normal     bool
+	Status     string
+	StatusType string
+}
+type Endpoint struct {
+	Address string
+	Port    int32
+}
+
+type DescInstance struct {
+	CharSetName                           string
+	DBInstanceArn                         string
+	DBInstanceIdentifier                  string
+	DBInstanceStatus                      string
+	DeletionProtection                    bool
+	InstanceCreateTime                    time.Time
+	Timezone                              string
+	SecondaryAZ                           string
+	ReadReplicaSourceDBInstanceIdentifier string
+	ReadReplicaDBInstanceIdentifiers      []string
+	ReadReplicaStatusInfos                []ReadReplicaStatus
+	Endpoint                              Endpoint
+	DBParameterGroups                     []ParameterGroupStatus
+	DBClusterIdentifier                   string
+	ReadReplicaDBClusterIdentifiers       []string
+}
+
+type ParameterGroupStatus struct {
+	Name        string
+	ApplyStatus string
 }
 
 // CreateDBInstanceInput
@@ -256,38 +291,59 @@ func (s *rdsInstance) CreateSnapshot(ctx context.Context) error {
 	return err
 }
 
-type ReadReplicaStatus struct {
-	Message    string
-	Normal     bool
-	Status     string
-	StatusType string
-}
-type Endpoint struct {
-	Address string
-	Port    int32
-}
-
-type DescInstance struct {
-	CharSetName                           string
-	DBInstanceArn                         string
-	DBInstanceIdentifier                  string
-	DBInstanceStatus                      string
-	DeletionProtection                    bool
-	InstanceCreateTime                    time.Time
-	Timezone                              string
-	SecondaryAZ                           string
-	ReadReplicaSourceDBInstanceIdentifier string
-	ReadReplicaDBInstanceIdentifiers      []string
-	ReadReplicaStatusInfos                []ReadReplicaStatus
-	Endpoint                              Endpoint
-	DBParameterGroups                     []ParameterGroupStatus
-	DBClusterIdentifier                   string
-	ReadReplicaDBClusterIdentifiers       []string
+func convertDBInstance(dbInstance *types.DBInstance) *DescInstance {
+	desc := &DescInstance{}
+	desc.CharSetName = aws.ToString(dbInstance.CharacterSetName)
+	desc.DBInstanceArn = aws.ToString(dbInstance.DBInstanceArn)
+	desc.DBInstanceIdentifier = aws.ToString(dbInstance.DBInstanceIdentifier)
+	if dbInstance.DBInstanceStatus != nil {
+		desc.DBInstanceStatus = aws.ToString(dbInstance.DBInstanceStatus)
+	}
+	desc.DeletionProtection = dbInstance.DeletionProtection
+	desc.InstanceCreateTime = aws.ToTime(dbInstance.InstanceCreateTime)
+	desc.Timezone = aws.ToString(dbInstance.Timezone)
+	desc.SecondaryAZ = aws.ToString(dbInstance.SecondaryAvailabilityZone)
+	desc.ReadReplicaSourceDBInstanceIdentifier = aws.ToString(dbInstance.ReadReplicaSourceDBInstanceIdentifier)
+	desc.ReadReplicaDBInstanceIdentifiers = dbInstance.ReadReplicaDBInstanceIdentifiers
+	desc.ReadReplicaStatusInfos = convertReadReplicaStatus(dbInstance.StatusInfos)
+	if dbInstance.Endpoint != nil {
+		desc.Endpoint = convertEndpoint(dbInstance.Endpoint)
+	}
+	desc.DBParameterGroups = convertParameterGroupStatus(dbInstance.DBParameterGroups)
+	desc.DBClusterIdentifier = aws.ToString(dbInstance.DBClusterIdentifier)
+	desc.ReadReplicaDBClusterIdentifiers = dbInstance.ReadReplicaDBClusterIdentifiers
+	return desc
 }
 
-type ParameterGroupStatus struct {
-	Name        string
-	ApplyStatus string
+func convertReadReplicaStatus(infos []types.DBInstanceStatusInfo) []ReadReplicaStatus {
+	var readReplicaStatusInfos []ReadReplicaStatus
+	for _, info := range infos {
+		readReplicaStatusInfos = append(readReplicaStatusInfos, ReadReplicaStatus{
+			Message:    aws.ToString(info.Message),
+			Normal:     info.Normal,
+			Status:     aws.ToString(info.Status),
+			StatusType: aws.ToString(info.StatusType),
+		})
+	}
+	return readReplicaStatusInfos
+}
+
+func convertEndpoint(endpoint *types.Endpoint) Endpoint {
+	return Endpoint{
+		Address: aws.ToString(endpoint.Address),
+		Port:    endpoint.Port,
+	}
+}
+
+func convertParameterGroupStatus(dbParameterGroups []types.DBParameterGroupStatus) []ParameterGroupStatus {
+	var parameterGroupStatus []ParameterGroupStatus
+	for _, group := range dbParameterGroups {
+		parameterGroupStatus = append(parameterGroupStatus, ParameterGroupStatus{
+			Name:        aws.ToString(group.DBParameterGroupName),
+			ApplyStatus: aws.ToString(group.ParameterApplyStatus),
+		})
+	}
+	return parameterGroupStatus
 }
 
 func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
@@ -297,45 +353,7 @@ func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 	}
 	desc := &DescInstance{}
 	if len(output.DBInstances) > 0 {
-		desc.CharSetName = aws.ToString(output.DBInstances[0].CharacterSetName)
-		desc.DBInstanceArn = aws.ToString(output.DBInstances[0].DBInstanceArn)
-		desc.DBInstanceIdentifier = aws.ToString(output.DBInstances[0].DBInstanceIdentifier)
-		desc.DeletionProtection = output.DBInstances[0].DeletionProtection
-		desc.InstanceCreateTime = aws.ToTime(output.DBInstances[0].InstanceCreateTime)
-		desc.Timezone = aws.ToString(output.DBInstances[0].Timezone)
-		desc.SecondaryAZ = aws.ToString(output.DBInstances[0].SecondaryAvailabilityZone)
-		desc.ReadReplicaSourceDBInstanceIdentifier = aws.ToString(output.DBInstances[0].ReadReplicaSourceDBInstanceIdentifier)
-		desc.ReadReplicaDBInstanceIdentifiers = output.DBInstances[0].ReadReplicaDBInstanceIdentifiers
-
-		for _, s := range output.DBInstances[0].StatusInfos {
-			desc.ReadReplicaStatusInfos = append(desc.ReadReplicaStatusInfos, ReadReplicaStatus{
-				Message:    aws.ToString(s.Message),
-				Normal:     s.Normal,
-				Status:     aws.ToString(s.Status),
-				StatusType: aws.ToString(s.StatusType),
-			})
-		}
-
-		if output.DBInstances[0].DBInstanceStatus != nil {
-			desc.DBInstanceStatus = aws.ToString(output.DBInstances[0].DBInstanceStatus)
-		}
-
-		if output.DBInstances[0].Endpoint != nil {
-			desc.Endpoint = Endpoint{
-				Address: aws.ToString(output.DBInstances[0].Endpoint.Address),
-				Port:    aws.ToInt32(&output.DBInstances[0].Endpoint.Port),
-			}
-		}
-
-		for _, g := range output.DBInstances[0].DBParameterGroups {
-			desc.DBParameterGroups = append(desc.DBParameterGroups, ParameterGroupStatus{
-				Name:        aws.ToString(g.DBParameterGroupName),
-				ApplyStatus: aws.ToString(g.ParameterApplyStatus),
-			})
-		}
-
-		desc.ReadReplicaDBClusterIdentifiers = output.DBInstances[0].ReadReplicaDBClusterIdentifiers
-		desc.DBClusterIdentifier = aws.ToString(output.DBInstances[0].DBClusterIdentifier)
+		desc = convertDBInstance(&output.DBInstances[0])
 	}
 	return desc, nil
 }

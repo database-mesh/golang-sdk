@@ -44,6 +44,7 @@ type Aurora interface {
 	FailoverRandomOneReadonlyEndpoint(context.Context) error
 	NewReadonlyEndpoint(context.Context) error
 	Delete(context.Context) error
+	Describe(context.Context) (*DescCluster, error)
 }
 
 type rdsAurora struct {
@@ -82,6 +83,7 @@ func (s *rdsAurora) SetDBClusterIdentifier(id string) Aurora {
 	s.createInstanceParam.DBClusterIdentifier = aws.String(id)
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	s.deleteClusterParam.DBClusterIdentifier = aws.String(id)
+	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -171,4 +173,14 @@ func (s *rdsAurora) Delete(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *rdsAurora) Describe(ctx context.Context) (*DescCluster, error) {
+	out, err := s.core.DescribeDBClusters(ctx, s.describeClusterParam)
+	// if cluster not found, aws api will return error.
+	if err != nil {
+		return nil, err
+	}
+
+	return convertDBCluster(&out.DBClusters[0]), nil
 }

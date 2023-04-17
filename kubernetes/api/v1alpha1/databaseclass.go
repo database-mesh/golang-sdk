@@ -50,6 +50,17 @@ const (
 	AnnotationsVPCSecurityGroupIds = "databaseclass.database-mesh.io/vpc-security-group-ids"
 	AnnotationsSubnetGroupName     = "databaseclass.database-mesh.io/vpc-subnet-group-name"
 	AnnotationsAvailabilityZones   = "databaseclass.database-mesh.io/availability-zones"
+	AnnotationsClusterIdentifier   = "databaseclass.database-mesh.io/cluster-identifier"
+	AnnotationsInstanceIdentifier  = "databaseclass.database-mesh.io/instance-identifier"
+	AnnotationsSnapshotIdentifier  = "databaseclass.database-mesh.io/snapshot-identifier"
+	AnnotationsMasterUsername      = "databaseclass.database-mesh.io/master-username"
+	AnnotationsMasterUserPassword  = "databaseclass.database-mesh.io/master-user-password"
+)
+
+const (
+	ProvisionerAWSRDSInstance = "databaseclass.database-mesh.io/aws-rds-instance"
+	ProvisionerAWSRDSCluster  = "databaseclass.database-mesh.io/aws-rds-cluster"
+	ProvisionerAWSAurora      = "databaseclass.database-mesh.io/aws-aurora"
 )
 
 type DatabaseStorage struct {

@@ -20,6 +20,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 )
 
 type Cluster interface {
@@ -253,7 +254,7 @@ type DescCluster struct {
 	DBClusterArn                string
 	DBClusterIdentifier         string
 	DBClusterMembers            []ClusterMember
-	DBClusterParamterGroup      string
+	DBClusterParameterGroup     string
 	DeletionProtection          bool
 	PrimaryEndpoint             string
 	ReadReplicaIdentifiers      []string
@@ -269,6 +270,39 @@ type ClusterMember struct {
 	IsClusterWrite                bool
 }
 
+// convertDBCluster converts aws types.DBCluster to DescCluster
+func convertDBCluster(in *types.DBCluster) *DescCluster {
+	return &DescCluster{
+		CharSetName:                 aws.ToString(in.CharacterSetName),
+		ClusterCreateTime:           aws.ToTime(in.ClusterCreateTime),
+		AvailabilityZones:           in.AvailabilityZones,
+		CustomEndpoints:             in.CustomEndpoints,
+		DBClusterArn:                aws.ToString(in.DBClusterArn),
+		DBClusterIdentifier:         aws.ToString(in.DBClusterIdentifier),
+		DBClusterMembers:            convertDBClusterMembers(in.DBClusterMembers),
+		DBClusterParameterGroup:     aws.ToString(in.DBClusterParameterGroup),
+		DeletionProtection:          aws.ToBool(in.DeletionProtection),
+		PrimaryEndpoint:             aws.ToString(in.Endpoint),
+		ReadReplicaIdentifiers:      in.ReadReplicaIdentifiers,
+		ReaderEndpoint:              aws.ToString(in.ReaderEndpoint),
+		ReplicationSourceIdentifier: aws.ToString(in.ReplicationSourceIdentifier),
+		Status:                      aws.ToString(in.Status),
+		Port:                        aws.ToInt32(in.Port),
+	}
+}
+
+func convertDBClusterMembers(in []types.DBClusterMember) []ClusterMember {
+	var out []ClusterMember
+	for _, m := range in {
+		out = append(out, ClusterMember{
+			DBClusterParameterGroupStatus: aws.ToString(m.DBClusterParameterGroupStatus),
+			DBInstanceIdentifier:          aws.ToString(m.DBInstanceIdentifier),
+			IsClusterWrite:                m.IsClusterWriter,
+		})
+	}
+	return out
+}
+
 func (s *rdsCluster) Describe(ctx context.Context) (*DescCluster, error) {
 	output, err := s.core.DescribeDBClusters(ctx, s.describeClusterParam)
 	if err != nil {
@@ -276,27 +310,7 @@ func (s *rdsCluster) Describe(ctx context.Context) (*DescCluster, error) {
 	}
 	desc := &DescCluster{}
 	if len(output.DBClusters) > 0 {
-		desc.AvailabilityZones = output.DBClusters[0].AvailabilityZones
-		desc.CharSetName = aws.ToString(output.DBClusters[0].CharacterSetName)
-		desc.ClusterCreateTime = aws.ToTime(output.DBClusters[0].ClusterCreateTime)
-		desc.CustomEndpoints = output.DBClusters[0].CustomEndpoints
-		desc.DBClusterArn = aws.ToString(output.DBClusters[0].DBClusterArn)
-		desc.DBClusterIdentifier = aws.ToString(output.DBClusters[0].DBClusterIdentifier)
-		for _, m := range output.DBClusters[0].DBClusterMembers {
-			desc.DBClusterMembers = append(desc.DBClusterMembers, ClusterMember{
-				DBClusterParameterGroupStatus: aws.ToString(m.DBClusterParameterGroupStatus),
-				DBInstanceIdentifier:          aws.ToString(m.DBInstanceIdentifier),
-				IsClusterWrite:                m.IsClusterWriter,
-			})
-		}
-		desc.DBClusterParamterGroup = aws.ToString(output.DBClusters[0].DBClusterParameterGroup)
-		desc.DeletionProtection = aws.ToBool(output.DBClusters[0].DeletionProtection)
-		desc.PrimaryEndpoint = aws.ToString(output.DBClusters[0].Endpoint)
-		desc.ReadReplicaIdentifiers = output.DBClusters[0].ReadReplicaIdentifiers
-		desc.ReaderEndpoint = aws.ToString(output.DBClusters[0].ReaderEndpoint)
-		desc.ReplicationSourceIdentifier = aws.ToString(output.DBClusters[0].ReplicationSourceIdentifier)
-		desc.Port = aws.ToInt32(output.DBClusters[0].Port)
-		desc.Status = aws.ToString(output.DBClusters[0].Status)
+		desc = convertDBCluster(&output.DBClusters[0])
 	}
 	return desc, nil
 }
