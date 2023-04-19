@@ -16,11 +16,13 @@ package rds
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
+	"github.com/aws/smithy-go"
 )
 
 type Instance interface {
@@ -349,8 +351,12 @@ func convertParameterGroupStatus(dbParameterGroups []types.DBParameterGroupStatu
 func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 	output, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
 	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
+			return nil, nil
+		}
 		return nil, err
 	}
+
 	desc := &DescInstance{}
 	if len(output.DBInstances) > 0 {
 		desc = convertDBInstance(&output.DBInstances[0])

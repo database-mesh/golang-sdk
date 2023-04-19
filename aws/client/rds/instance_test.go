@@ -29,6 +29,22 @@ import (
 
 var _ = Describe("instance", func() {
 
+	Context("describe instance", func() {
+		It("should describe instance", func() {
+			if region == "" || accessKey == "" || secretKey == "" {
+				Skip("region, accessKey, secretKey are required")
+			}
+
+			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			instance := rds.NewService(sess[region]).Instance()
+
+			instance.SetDBInstanceIdentifier("test1")
+			ins, err := instance.Describe(context.Background())
+			Expect(err).To(BeNil())
+			Expect(ins).To(BeNil())
+		})
+	})
+
 	It("should create instance", func() {
 		if region == "" || accessKey == "" || secretKey == "" {
 			Skip("region, accessKey, secretKey are required")
