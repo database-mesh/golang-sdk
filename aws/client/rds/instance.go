@@ -207,7 +207,13 @@ func (s *rdsInstance) SetSkipFinalSnapshot(skip bool) Instance {
 
 func (s *rdsInstance) Delete(ctx context.Context) error {
 	_, err := s.core.DeleteDBInstance(ctx, s.deleteInstanceParam)
-	return err
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 // NOTE: ForceFailover cannot be specified since the instance is not configured for either MultiAZ or High Availability
