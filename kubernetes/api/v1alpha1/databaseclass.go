@@ -52,6 +52,7 @@ const (
 	AnnotationsAvailabilityZones   = "databaseclass.database-mesh.io/availability-zones"
 	AnnotationsClusterIdentifier   = "databaseclass.database-mesh.io/cluster-identifier"
 	AnnotationsInstanceIdentifier  = "databaseclass.database-mesh.io/instance-identifier"
+	AnnotationsInstanceDBName      = "databaseclass.database-mesh.io/instance-db-name"
 	AnnotationsSnapshotIdentifier  = "databaseclass.database-mesh.io/snapshot-identifier"
 	AnnotationsMasterUsername      = "databaseclass.database-mesh.io/master-username"
 	AnnotationsMasterUserPassword  = "databaseclass.database-mesh.io/master-user-password"
