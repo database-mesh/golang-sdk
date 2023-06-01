@@ -88,6 +88,7 @@ type DescInstance struct {
 	DBInstanceArn                         string
 	DBInstanceIdentifier                  string
 	DBInstanceStatus                      DBInstanceStatus
+	DBName                                string
 	DeletionProtection                    bool
 	InstanceCreateTime                    time.Time
 	Timezone                              string
@@ -324,6 +325,7 @@ func convertDBInstance(dbInstance *types.DBInstance) *DescInstance {
 	if dbInstance.DBInstanceStatus != nil {
 		desc.DBInstanceStatus = convertDBInstanceStatus(dbInstance.DBInstanceStatus)
 	}
+	desc.DBName = aws.ToString(dbInstance.DBName)
 	desc.DeletionProtection = dbInstance.DeletionProtection
 	desc.InstanceCreateTime = aws.ToTime(dbInstance.InstanceCreateTime)
 	desc.Timezone = aws.ToString(dbInstance.Timezone)
