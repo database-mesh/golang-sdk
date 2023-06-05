@@ -53,11 +53,13 @@ type Instance interface {
 	SetPublicAccessible(enable bool) Instance
 	SetLicenseModel(model string) Instance
 	SetSnapshotIdentifier(id string) Instance
+	SetFilter(name string, values []string) Instance
 
 	Create(context.Context) error
 	Delete(context.Context) error
 	Reboot(context.Context) error
 	Describe(context.Context) (*DescInstance, error)
+	DescribeAll(ctx context.Context) ([]*DescInstance, error)
 	RestorePitr(context.Context) error
 	CreateSnapshot(context.Context) error
 	DescribeSnapshot(context.Context) (*types.DBSnapshot, error)
@@ -407,4 +409,39 @@ func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
 		desc = convertDBInstance(&output.DBInstances[0])
 	}
 	return desc, nil
+}
+
+func (s *rdsInstance) SetFilter(name string, values []string) Instance {
+	var exists = false
+	for _, filter := range s.describeInstanceParam.Filters {
+		if filter.Name == nil {
+			continue
+		}
+		if *filter.Name == name {
+			filter.Values = values
+			exists = true
+		}
+	}
+	if !exists {
+		s.describeInstanceParam.Filters = append(s.describeInstanceParam.Filters, types.Filter{
+			Name:   aws.String(name),
+			Values: values,
+		})
+	}
+	return s
+}
+
+func (s *rdsInstance) DescribeAll(ctx context.Context) ([]*DescInstance, error) {
+	output, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var descs []*DescInstance
+	for _, dbInstance := range output.DBInstances {
+		descs = append(descs, convertDBInstance(&dbInstance))
+	}
+	return descs, nil
 }

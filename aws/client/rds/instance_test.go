@@ -28,13 +28,14 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var ctx = context.Background()
+
 var _ = Describe("instance", func() {
 	Context("describe instance", func() {
 		It("should describe instance", func() {
 			if region == "" || accessKey == "" || secretKey == "" {
 				Skip("region, accessKey, secretKey are required")
 			}
-
 			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
 			instance := rds.NewService(sess[region]).Instance()
 
@@ -92,7 +93,6 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should create snapshot success", func() {
-
 		if region == "" || accessKey == "" || secretKey == "" {
 			Skip("region, accessKey, secretKey are required")
 		}
@@ -126,4 +126,18 @@ var _ = Describe("instance", func() {
 		fmt.Printf("snapshot create time: %s", snapshot.SnapshotCreateTime.Format("20060102150405"))
 	})
 
+	It("should describe instances by filter", func() {
+		if region == "" || accessKey == "" || secretKey == "" {
+			Skip("region, accessKey, secretKey are required")
+		}
+		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		instance := rds.NewService(sess[region]).Instance()
+
+		instance.SetFilter("db-cluster-id", []string{"database-1-op"})
+		resp, err := instance.DescribeAll(ctx)
+		Expect(err).To(BeNil())
+		Expect(resp).ToNot(BeNil())
+		d, _ := json.MarshalIndent(resp, "", "  ")
+		fmt.Println(string(d))
+	})
 })
