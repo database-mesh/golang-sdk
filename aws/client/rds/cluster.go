@@ -23,6 +23,27 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 )
 
+const (
+	ClusterStatusCreating        = "creating"
+	ClusterStatusAvailable       = "available"
+	ClusterStatusDeleting        = "deleting"
+	ClusterStatusFailed          = "failed"
+	ClusterStatusBackingUp       = "backing-up"
+	ClusterStatusBacktracking    = "backtracking"
+	ClusterStatusCloningFailed   = "cloning-failed"
+	ClusterStatusFailingOver     = "failing-over"
+	ClusterStatusMaintenance     = "maintenance"
+	ClusterStatusMigrating       = "migrating"
+	ClusterStatusMigrationFailed = "migration-failed"
+	ClusterStatusModifying       = "modifying"
+	ClusterStatusPromoting       = "promoting"
+	ClusterStatusRenaming        = "renaming"
+	ClusterStatusStaring         = "starting"
+	ClusterStatusStopping        = "stopping"
+	ClusterStatusStopped         = "stopped"
+	ClusterStatusUpgrading       = "upgrading"
+)
+
 type Cluster interface {
 	SetDBClusterIdentifier(id string) Cluster
 	SetTargetDBInstanceIdentifier(id string) Cluster

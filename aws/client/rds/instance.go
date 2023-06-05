@@ -60,6 +60,7 @@ type Instance interface {
 	Describe(context.Context) (*DescInstance, error)
 	RestorePitr(context.Context) error
 	CreateSnapshot(context.Context) error
+	DescribeSnapshot(context.Context) (*types.DBSnapshot, error)
 }
 
 type rdsInstance struct {
@@ -70,6 +71,7 @@ type rdsInstance struct {
 	describeInstanceParam    *rds.DescribeDBInstancesInput
 	restoreInstancePitrParam *rds.RestoreDBInstanceToPointInTimeInput
 	createSnapshotParam      *rds.CreateDBSnapshotInput
+	describeSnapshotParam    *rds.DescribeDBSnapshotsInput
 }
 
 type ReadReplicaStatus struct {
@@ -141,6 +143,7 @@ func (s *rdsInstance) SetDBInstanceIdentifier(id string) Instance {
 	s.rebootInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.describeInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.createSnapshotParam.DBInstanceIdentifier = aws.String(id)
+	s.describeInstanceParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
@@ -207,7 +210,6 @@ func (s *rdsInstance) Create(ctx context.Context) error {
 	return err
 }
 
-// DeleteDBInstanceInput
 func (s *rdsInstance) SetDeleteAutomateBackups(enable bool) Instance {
 	s.deleteInstanceParam.DeleteAutomatedBackups = aws.Bool(enable)
 	return s
@@ -234,6 +236,7 @@ func (s *rdsInstance) Delete(ctx context.Context) error {
 	return nil
 }
 
+// SetForceFailover
 // NOTE: ForceFailover cannot be specified since the instance is not configured for either MultiAZ or High Availability
 // RebootDBInstanceInput
 func (s *rdsInstance) SetForceFailover(force bool) Instance {
@@ -241,6 +244,7 @@ func (s *rdsInstance) SetForceFailover(force bool) Instance {
 	return s
 }
 
+// Reboot
 // NOTE: Can only reboot db instances with state in: available, storage-optimization, incompatible-credentials, incompatible-parameters.
 func (s *rdsInstance) Reboot(ctx context.Context) error {
 	_, err := s.core.RebootDBInstance(ctx, s.rebootInstanceParam)
@@ -309,12 +313,24 @@ func (s *rdsInstance) RestorePitr(ctx context.Context) error {
 
 func (s *rdsInstance) SetSnapshotIdentifier(id string) Instance {
 	s.createSnapshotParam.DBSnapshotIdentifier = aws.String(id)
+	s.describeSnapshotParam.DBSnapshotIdentifier = aws.String(id)
 	return s
 }
 
 func (s *rdsInstance) CreateSnapshot(ctx context.Context) error {
 	_, err := s.core.CreateDBSnapshot(ctx, s.createSnapshotParam)
 	return err
+}
+
+func (s *rdsInstance) DescribeSnapshot(ctx context.Context) (*types.DBSnapshot, error) {
+	resp, err := s.core.DescribeDBSnapshots(ctx, s.describeSnapshotParam)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.DBSnapshots) == 0 {
+		return nil, nil
+	}
+	return &resp.DBSnapshots[0], nil
 }
 
 func convertDBInstance(dbInstance *types.DBInstance) *DescInstance {

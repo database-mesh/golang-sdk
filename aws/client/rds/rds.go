@@ -53,6 +53,7 @@ func NewService(sess aws.Config) *service {
 			describeInstanceParam:    &rds.DescribeDBInstancesInput{},
 			restoreInstancePitrParam: &rds.RestoreDBInstanceToPointInTimeInput{},
 			createSnapshotParam:      &rds.CreateDBSnapshotInput{},
+			describeSnapshotParam:    &rds.DescribeDBSnapshotsInput{},
 		},
 		cluster: &rdsCluster{
 			core:                         rds.NewFromConfig(sess),
