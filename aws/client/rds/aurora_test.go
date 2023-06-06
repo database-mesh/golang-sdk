@@ -62,4 +62,28 @@ var _ = Describe("Aurora", func() {
 
 		Expect(aurora.Delete(context.Background())).To(BeNil())
 	})
+
+	It("should create aws aurora with 3 replicas", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		aurora := rds.NewService(sess[region]).Aurora()
+
+		aurora.SetEngineVersion("5.7").
+			SetEngine("aurora-mysql").
+			SetDBClusterIdentifier("test-create-aws-aurora-with-replicas3").
+			SetMasterUsername("root").
+			SetMasterUserPassword("12345678").
+			SetDBInstanceClass("db.t3.medium").
+			SetInstanceNumber(3)
+		Expect(aurora.Create(context.Background())).To(BeNil())
+	})
+
+	It("should delete aws aurora with 3 replicas", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		aurora := rds.NewService(sess[region]).Aurora()
+
+		aurora.SetDBClusterIdentifier("test-create-aws-aurora-with-replicas3").
+			SetDeleteAutomateBackups(true).
+			SetSkipFinalSnapshot(true)
+		Expect(aurora.Delete(context.Background())).To(BeNil())
+	})
 })

@@ -16,9 +16,11 @@ package rds
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 )
 
 type Aurora interface {
@@ -31,6 +33,7 @@ type Aurora interface {
 	SetVpcSecurityGroupIds(sgids []string) Aurora
 	SetDBSubnetGroup(sbg string) Aurora
 	SetSkipFinalSnapshot(enable bool) Aurora
+	SetInstanceNumber(num int32) Aurora
 
 	// RDSInstance for Aurora
 	SetDBInstanceIdentifier(id string) Aurora
@@ -57,6 +60,7 @@ type rdsAurora struct {
 	rebootClusterParam         *rds.RebootDBClusterInput
 	describeClusterParam       *rds.DescribeDBClustersInput
 	restoreDBClusterPitrParam  *rds.RestoreDBClusterToPointInTimeInput
+	instanceNumber             int32
 
 	createInstanceParam      *rds.CreateDBInstanceInput
 	deleteInstanceParam      *rds.DeleteDBInstanceInput
@@ -84,6 +88,11 @@ func (s *rdsAurora) SetDBClusterIdentifier(id string) Aurora {
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	s.deleteClusterParam.DBClusterIdentifier = aws.String(id)
 	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsAurora) SetInstanceNumber(num int32) Aurora {
+	s.instanceNumber = num
 	return s
 }
 
@@ -135,8 +144,18 @@ func (s *rdsAurora) SetDeleteAutomateBackups(enable bool) Aurora {
 }
 
 func (s *rdsAurora) Create(ctx context.Context) error {
-	_, err := s.core.CreateDBCluster(ctx, s.createClusterParam)
-	return err
+	if _, err := s.core.CreateDBCluster(ctx, s.createClusterParam); err != nil {
+		return err
+	}
+
+	for i := 0; i < int(s.instanceNumber); i++ {
+		instanceIdentifierName := fmt.Sprintf("%s-instance-%d", *s.createClusterParam.DBClusterIdentifier, i)
+		s.SetDBInstanceIdentifier(instanceIdentifierName)
+		if _, err := s.core.CreateDBInstance(ctx, s.createInstanceParam); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *rdsAurora) CreateWithPrimary(ctx context.Context) error {
@@ -164,10 +183,39 @@ func (s *rdsAurora) FailoverRandomOneReadonlyEndpoint(ctx context.Context) error
 }
 
 func (s *rdsAurora) Delete(ctx context.Context) error {
-	if _, err := s.core.DeleteDBInstance(ctx, s.deleteInstanceParam); err != nil {
+	if s.deleteInstanceParam.SkipFinalSnapshot == false && (s.deleteInstanceParam.FinalDBSnapshotIdentifier == nil) {
+		return fmt.Errorf("final snapshot identifier is required when skip final snapshot is false")
+	}
+
+	// delete instances of cluster
+	var exists = false
+	for _, filter := range s.describeClusterParam.Filters {
+		if *filter.Name == "db-cluster-id" {
+			filter.Values = []string{*s.createClusterParam.DBClusterIdentifier}
+			exists = true
+			break
+		}
+	}
+	if !exists {
+		s.describeInstanceParam.Filters = append(s.describeInstanceParam.Filters, types.Filter{
+			Name:   aws.String("db-cluster-id"),
+			Values: []string{*s.createClusterParam.DBClusterIdentifier},
+		})
+	}
+
+	instances, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
+	if err != nil {
 		return err
 	}
 
+	for _, instance := range instances.DBInstances {
+		s.deleteInstanceParam.DBInstanceIdentifier = instance.DBInstanceIdentifier
+		if _, err := s.core.DeleteDBInstance(ctx, s.deleteInstanceParam); err != nil {
+			return err
+		}
+	}
+
+	// delete cluster
 	if _, err := s.core.DeleteDBCluster(ctx, s.deleteClusterParam); err != nil {
 		return err
 	}
