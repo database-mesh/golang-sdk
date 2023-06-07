@@ -16,7 +16,9 @@ package rds
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/aws/smithy-go"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
@@ -217,7 +219,9 @@ func (s *rdsAurora) Delete(ctx context.Context) error {
 
 	// delete cluster
 	if _, err := s.core.DeleteDBCluster(ctx, s.deleteClusterParam); err != nil {
-		return err
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterNotFoundFault); !ok {
+			return err
+		}
 	}
 
 	return nil
@@ -227,6 +231,9 @@ func (s *rdsAurora) Describe(ctx context.Context) (*DescCluster, error) {
 	out, err := s.core.DescribeDBClusters(ctx, s.describeClusterParam)
 	// if cluster not found, aws api will return error.
 	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterNotFoundFault); ok {
+			return nil, nil
+		}
 		return nil, err
 	}
 
