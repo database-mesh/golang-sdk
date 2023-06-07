@@ -36,6 +36,7 @@ type Aurora interface {
 	SetDBSubnetGroup(sbg string) Aurora
 	SetSkipFinalSnapshot(enable bool) Aurora
 	SetInstanceNumber(num int32) Aurora
+	SetDBName(name string) Aurora
 
 	// RDSInstance for Aurora
 	SetDBInstanceIdentifier(id string) Aurora
@@ -142,6 +143,13 @@ func (s *rdsAurora) SetSkipFinalSnapshot(enable bool) Aurora {
 
 func (s *rdsAurora) SetDeleteAutomateBackups(enable bool) Aurora {
 	s.deleteInstanceParam.DeleteAutomatedBackups = aws.Bool(enable)
+	return s
+}
+
+func (s *rdsAurora) SetDBName(name string) Aurora {
+	s.createClusterParam.DatabaseName = aws.String(name)
+	s.restoreInstancePitrParam.DBName = aws.String(name)
+	s.restoreInstancePitrParam.DBName = aws.String(name)
 	return s
 }
 
