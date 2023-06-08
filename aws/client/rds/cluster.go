@@ -72,6 +72,7 @@ type Cluster interface {
 	SetUseLatestRestorableTime(enable bool) Cluster
 	SetPublicAccessible(enable bool) Cluster
 	SetSnapshotIdentifier(id string) Cluster
+	SetSkipSnapshot(bool) Cluster
 
 	Failover(context.Context) error
 	FailoverGlobal(context.Context) error
@@ -93,6 +94,11 @@ type rdsCluster struct {
 	describeClusterParam         *rds.DescribeDBClustersInput
 	restoreDBClusterPitrParam    *rds.RestoreDBClusterToPointInTimeInput
 	createDBClusterSnapshotParam *rds.CreateDBClusterSnapshotInput
+}
+
+func (s *rdsCluster) SetSkipSnapshot(enable bool) Cluster {
+	s.deleteClusterParam.SkipFinalSnapshot = enable
+	return s
 }
 
 // FailoverClusterInput
