@@ -149,7 +149,6 @@ func (s *rdsAurora) SetDeleteAutomateBackups(enable bool) Aurora {
 func (s *rdsAurora) SetDBName(name string) Aurora {
 	s.createClusterParam.DatabaseName = aws.String(name)
 	s.restoreInstancePitrParam.DBName = aws.String(name)
-	s.restoreInstancePitrParam.DBName = aws.String(name)
 	return s
 }
 

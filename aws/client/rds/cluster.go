@@ -23,25 +23,27 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 )
 
+type DBClusterStatus string
+
 const (
-	DBClusterStatusCreating        = "creating"
-	DBClusterStatusAvailable       = "available"
-	DBClusterStatusDeleting        = "deleting"
-	DBClusterStatusFailed          = "failed"
-	DBClusterStatusBackingUp       = "backing-up"
-	DBClusterStatusBacktracking    = "backtracking"
-	DBClusterStatusCloningFailed   = "cloning-failed"
-	DBClusterStatusFailingOver     = "failing-over"
-	DBClusterStatusMaintenance     = "maintenance"
-	DBClusterStatusMigrating       = "migrating"
-	DBClusterStatusMigrationFailed = "migration-failed"
-	DBClusterStatusModifying       = "modifying"
-	DBClusterStatusPromoting       = "promoting"
-	DBClusterStatusRenaming        = "renaming"
-	DBClusterStatusStaring         = "starting"
-	DBClusterStatusStopping        = "stopping"
-	DBClusterStatusStopped         = "stopped"
-	DBClusterStatusUpgrading       = "upgrading"
+	DBClusterStatusCreating        DBClusterStatus = "creating"
+	DBClusterStatusAvailable       DBClusterStatus = "available"
+	DBClusterStatusDeleting        DBClusterStatus = "deleting"
+	DBClusterStatusFailed          DBClusterStatus = "failed"
+	DBClusterStatusBackingUp       DBClusterStatus = "backing-up"
+	DBClusterStatusBacktracking    DBClusterStatus = "backtracking"
+	DBClusterStatusCloningFailed   DBClusterStatus = "cloning-failed"
+	DBClusterStatusFailingOver     DBClusterStatus = "failing-over"
+	DBClusterStatusMaintenance     DBClusterStatus = "maintenance"
+	DBClusterStatusMigrating       DBClusterStatus = "migrating"
+	DBClusterStatusMigrationFailed DBClusterStatus = "migration-failed"
+	DBClusterStatusModifying       DBClusterStatus = "modifying"
+	DBClusterStatusPromoting       DBClusterStatus = "promoting"
+	DBClusterStatusRenaming        DBClusterStatus = "renaming"
+	DBClusterStatusStaring         DBClusterStatus = "starting"
+	DBClusterStatusStopping        DBClusterStatus = "stopping"
+	DBClusterStatusStopped         DBClusterStatus = "stopped"
+	DBClusterStatusUpgrading       DBClusterStatus = "upgrading"
 )
 
 type Cluster interface {
