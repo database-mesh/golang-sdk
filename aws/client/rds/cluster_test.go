@@ -17,6 +17,7 @@
 package rds_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/database-mesh/golang-sdk/aws"
 	"github.com/database-mesh/golang-sdk/aws/client/rds"
@@ -42,7 +43,8 @@ var _ = Describe("Test Cluster", func() {
 				SetIOPS(1000).
 				SetDBClusterInstanceClass("db.m5d.large").
 				SetMasterUsername("root").
-				SetMasterUserPassword("password")
+				SetMasterUserPassword("password").
+				SetDatabaseName("test_db")
 			err := cc.Create(ctx)
 			if err != nil {
 				fmt.Println(err.Error())
@@ -51,8 +53,24 @@ var _ = Describe("Test Cluster", func() {
 		})
 	})
 
-	Context("Test delete cluster", func() {
+	Context("Test describe cluster", func() {
 		It("should success", func() {
+			if region == "" || accessKey == "" || secretKey == "" {
+				Skip("region, accessKey, secretKey are required")
+			}
+			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			cc := rds.NewService(sess[region]).Cluster()
+
+			cc.SetDBClusterIdentifier("test-cluster-1")
+			cluster, err := cc.Describe(ctx)
+			Expect(err).To(BeNil())
+			d, _ := json.MarshalIndent(cluster, "", "  ")
+			fmt.Println(string(d))
+		})
+	})
+
+	Context("Test delete cluster", func() {
+		It("should success when skip final snapshot", func() {
 			if region == "" || accessKey == "" || secretKey == "" {
 				Skip("region, accessKey, secretKey are required")
 			}
@@ -61,6 +79,22 @@ var _ = Describe("Test Cluster", func() {
 			cc.SetDBClusterIdentifier("test-cluster-1").
 				SetSkipFinalSnapshot(true)
 
+			err := cc.Delete(ctx)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			Expect(err).To(BeNil())
+		})
+
+		It("should success when set final snapshot", func() {
+			if region == "" || accessKey == "" || secretKey == "" {
+				Skip("region, accessKey, secretKey are required")
+			}
+			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			cc := rds.NewService(sess[region]).Cluster()
+
+			cc.SetDBClusterIdentifier("test-cluster-1").
+				SetFinalDBSnapshotIdentifier("test-cluster-1-final-snapshot")
 			err := cc.Delete(ctx)
 			if err != nil {
 				fmt.Println(err.Error())

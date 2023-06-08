@@ -16,6 +16,8 @@ package rds
 
 import (
 	"context"
+	"errors"
+	"github.com/aws/smithy-go"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -72,6 +74,7 @@ type Cluster interface {
 	SetUseLatestRestorableTime(enable bool) Cluster
 	SetPublicAccessible(enable bool) Cluster
 	SetSnapshotIdentifier(id string) Cluster
+	SetFinalDBSnapshotIdentifier(id string) Cluster
 	SetSkipSnapshot(bool) Cluster
 
 	Failover(context.Context) error
@@ -213,7 +216,6 @@ func (s *rdsCluster) Create(ctx context.Context) error {
 	return err
 }
 
-// DeleteDBClusterInput
 func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) Cluster {
 	s.deleteClusterParam.SkipFinalSnapshot = skip
 	return s
@@ -226,7 +228,12 @@ func (s *rdsCluster) SetPublicAccessible(enable bool) Cluster {
 
 func (s *rdsCluster) Delete(ctx context.Context) error {
 	_, err := s.core.DeleteDBCluster(ctx, s.deleteClusterParam)
-	return err
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterNotFoundFault); !ok {
+			return err
+		}
+	}
+	return nil
 }
 
 // RebootDBClusterInput
@@ -267,6 +274,11 @@ func (s *rdsCluster) RestorePitr(ctx context.Context) error {
 
 func (s *rdsCluster) SetSnapshotIdentifier(id string) Cluster {
 	s.createDBClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsCluster) SetFinalDBSnapshotIdentifier(id string) Cluster {
+	s.deleteClusterParam.FinalDBSnapshotIdentifier = aws.String(id)
 	return s
 }
 
@@ -334,9 +346,14 @@ func convertDBClusterMembers(in []types.DBClusterMember) []ClusterMember {
 
 func (s *rdsCluster) Describe(ctx context.Context) (*DescCluster, error) {
 	output, err := s.core.DescribeDBClusters(ctx, s.describeClusterParam)
+
 	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterNotFoundFault); ok {
+			return nil, nil
+		}
 		return nil, err
 	}
+
 	desc := &DescCluster{}
 	if len(output.DBClusters) > 0 {
 		desc = convertDBCluster(&output.DBClusters[0])
