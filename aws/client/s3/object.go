@@ -17,6 +17,7 @@ package s3
 import (
 	"context"
 	"io"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -25,11 +26,13 @@ import (
 
 type Object interface {
 	SetBucket(bucket string) Object
+	SetKey(key string) Object
+	SetValue(value string) Object
 	SetACL(acl types.ObjectCannedACL) Object
 	SetReader(reader io.Reader) Object
 
 	Put(context.Context) error
-	Get(context.Context) error
+	Get(context.Context) (string,error)
 	List(context.Context) error
 	Delete(context.Context) error
 	Head(context.Context) error
@@ -64,14 +67,36 @@ func (s *object) SetReader(reader io.Reader) Object {
 	return s
 }
 
+func (s *object) SetKey(key string) Object {
+	s.putObjectParam.Key = aws.String(key)
+	s.getObjectParam.Key = aws.String(key)
+	s.listObjectsParam.Prefix = aws.String(key)
+	s.deleteObjectParam.Key = aws.String(key)
+	s.headObjectParam.Key = aws.String(key)
+	return s
+}
+
+func (s *object) SetValue(value string) Object {
+	s.putObjectParam.Body = strings.NewReader(value)
+	return s
+}
+
 func (s *object) Put(ctx context.Context) error {
 	_, err := s.core.PutObject(ctx, s.putObjectParam)
 	return err
 }
 
-func (s *object) Get(ctx context.Context) error {
-	_, err := s.core.GetObject(ctx, s.getObjectParam)
-	return err
+func (s *object) Get(ctx context.Context) (string, error) {
+	obj, err := s.core.GetObject(ctx, s.getObjectParam)
+	if err != nil {
+		return "", err
+	}
+	defer obj.Body.Close()
+	data, err := io.ReadAll(obj.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func (s *object) List(ctx context.Context) error {

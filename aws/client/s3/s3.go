@@ -46,7 +46,12 @@ func NewService(sess aws.Config) *service {
 			uploadPartParam:   &s3.UploadPartInput{},
 		},
 		object: &object{
-			core: s3.NewFromConfig(sess),
+			core:              s3.NewFromConfig(sess),
+			putObjectParam:    &s3.PutObjectInput{},
+			getObjectParam:    &s3.GetObjectInput{},
+			listObjectsParam:  &s3.ListObjectsInput{},
+			deleteObjectParam: &s3.DeleteObjectInput{},
+			headObjectParam:   &s3.HeadObjectInput{},
 		},
 	}
 }
