@@ -85,18 +85,20 @@ type Cluster interface {
 	Describe(context.Context) (*DescCluster, error)
 	RestorePitr(context.Context) error
 	CreateSnapshot(context.Context) error
+	DescribeSnapshot(context.Context) (*DescSnapshot, error)
 }
 
 type rdsCluster struct {
-	core                         *rds.Client
-	createClusterParam           *rds.CreateDBClusterInput
-	deleteClusterParam           *rds.DeleteDBClusterInput
-	failoverClusterParam         *rds.FailoverDBClusterInput
-	failoverGlobalClusterParam   *rds.FailoverGlobalClusterInput
-	rebootClusterParam           *rds.RebootDBClusterInput
-	describeClusterParam         *rds.DescribeDBClustersInput
-	restoreDBClusterPitrParam    *rds.RestoreDBClusterToPointInTimeInput
-	createDBClusterSnapshotParam *rds.CreateDBClusterSnapshotInput
+	core                           *rds.Client
+	createClusterParam             *rds.CreateDBClusterInput
+	deleteClusterParam             *rds.DeleteDBClusterInput
+	failoverClusterParam           *rds.FailoverDBClusterInput
+	failoverGlobalClusterParam     *rds.FailoverGlobalClusterInput
+	rebootClusterParam             *rds.RebootDBClusterInput
+	describeClusterParam           *rds.DescribeDBClustersInput
+	restoreDBClusterPitrParam      *rds.RestoreDBClusterToPointInTimeInput
+	createDBClusterSnapshotParam   *rds.CreateDBClusterSnapshotInput
+	describeDBClusterSnapshotParam *rds.DescribeDBClusterSnapshotsInput
 }
 
 func (s *rdsCluster) SetSkipSnapshot(enable bool) Cluster {
@@ -274,6 +276,7 @@ func (s *rdsCluster) RestorePitr(ctx context.Context) error {
 
 func (s *rdsCluster) SetSnapshotIdentifier(id string) Cluster {
 	s.createDBClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
+	s.describeDBClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
 	return s
 }
 
@@ -285,6 +288,18 @@ func (s *rdsCluster) SetFinalDBSnapshotIdentifier(id string) Cluster {
 func (s *rdsCluster) CreateSnapshot(ctx context.Context) error {
 	_, err := s.core.CreateDBClusterSnapshot(ctx, s.createDBClusterSnapshotParam)
 	return err
+}
+
+func (s *rdsCluster) DescribeSnapshot(ctx context.Context) (*DescSnapshot, error) {
+	snapshots, err := s.core.DescribeDBClusterSnapshots(ctx, s.describeDBClusterSnapshotParam)
+	if err != nil {
+		return nil, err
+	}
+	if len(snapshots.DBClusterSnapshots) == 0 {
+		return nil, nil
+	}
+	snapshot := snapshots.DBClusterSnapshots[0]
+	return convertDBClusterSnapshot(&snapshot), nil
 }
 
 type DescCluster struct {
@@ -309,6 +324,19 @@ type ClusterMember struct {
 	DBClusterParameterGroupStatus string
 	DBInstanceIdentifier          string
 	IsClusterWrite                bool
+}
+
+type DescSnapshot struct {
+	ClusterCreateTime           time.Time
+	DBClusterIdentifier         string
+	DBClusterSnapshotArn        string
+	DBClusterSnapshotIdentifier string
+	Engine                      string
+	EngineVersion               string
+	PercentProgress             int32
+	SnapshotCreateTime          time.Time
+	SnapshotType                string
+	Status                      string
 }
 
 // convertDBCluster converts aws types.DBCluster to DescCluster
@@ -359,4 +387,19 @@ func (s *rdsCluster) Describe(ctx context.Context) (*DescCluster, error) {
 		desc = convertDBCluster(&output.DBClusters[0])
 	}
 	return desc, nil
+}
+
+func convertDBClusterSnapshot(in *types.DBClusterSnapshot) *DescSnapshot {
+	return &DescSnapshot{
+		ClusterCreateTime:           aws.ToTime(in.ClusterCreateTime),
+		DBClusterIdentifier:         aws.ToString(in.DBClusterIdentifier),
+		DBClusterSnapshotArn:        aws.ToString(in.DBClusterSnapshotArn),
+		DBClusterSnapshotIdentifier: aws.ToString(in.DBClusterSnapshotIdentifier),
+		Engine:                      aws.ToString(in.Engine),
+		EngineVersion:               aws.ToString(in.EngineVersion),
+		PercentProgress:             in.PercentProgress,
+		SnapshotCreateTime:          aws.ToTime(in.SnapshotCreateTime),
+		SnapshotType:                aws.ToString(in.SnapshotType),
+		Status:                      aws.ToString(in.Status),
+	}
 }

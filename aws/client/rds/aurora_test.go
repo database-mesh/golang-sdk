@@ -86,4 +86,16 @@ var _ = Describe("Aurora", func() {
 			SetSkipFinalSnapshot(true)
 		Expect(aurora.Delete(context.Background())).To(BeNil())
 	})
+
+	It("should get aurora cluster snapshot", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		aurora := rds.NewService(sess[region]).Aurora()
+
+		aurora.SetSnapshotIdentifier("database-for-console-test-1-instance-1-snapshot")
+		snapshot, err := aurora.DescribeSnapshot(ctx)
+		Expect(err).To(BeNil())
+		Expect(snapshot).ToNot(BeNil())
+		d, _ := json.MarshalIndent(snapshot, "", "  ")
+		fmt.Printf("snapshot: %+v\n", string(d))
+	})
 })

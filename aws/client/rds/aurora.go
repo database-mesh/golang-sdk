@@ -37,6 +37,7 @@ type Aurora interface {
 	SetSkipFinalSnapshot(enable bool) Aurora
 	SetInstanceNumber(num int32) Aurora
 	SetDBName(name string) Aurora
+	SetSnapshotIdentifier(id string) Aurora
 
 	// RDSInstance for Aurora
 	SetDBInstanceIdentifier(id string) Aurora
@@ -51,19 +52,23 @@ type Aurora interface {
 	NewReadonlyEndpoint(context.Context) error
 	Delete(context.Context) error
 	Describe(context.Context) (*DescCluster, error)
+	CreateSnapshot(context.Context) error
+	DescribeSnapshot(context.Context) (*DescSnapshot, error)
 }
 
 type rdsAurora struct {
 	core *rds.Client
 
-	createClusterParam         *rds.CreateDBClusterInput
-	deleteClusterParam         *rds.DeleteDBClusterInput
-	failoverClusterParam       *rds.FailoverDBClusterInput
-	failoverGlobalClusterParam *rds.FailoverGlobalClusterInput
-	rebootClusterParam         *rds.RebootDBClusterInput
-	describeClusterParam       *rds.DescribeDBClustersInput
-	restoreDBClusterPitrParam  *rds.RestoreDBClusterToPointInTimeInput
-	instanceNumber             int32
+	createClusterParam           *rds.CreateDBClusterInput
+	deleteClusterParam           *rds.DeleteDBClusterInput
+	failoverClusterParam         *rds.FailoverDBClusterInput
+	failoverGlobalClusterParam   *rds.FailoverGlobalClusterInput
+	rebootClusterParam           *rds.RebootDBClusterInput
+	describeClusterParam         *rds.DescribeDBClustersInput
+	restoreDBClusterPitrParam    *rds.RestoreDBClusterToPointInTimeInput
+	instanceNumber               int32
+	createClusterSnapshotParam   *rds.CreateDBClusterSnapshotInput
+	describeClusterSnapshotParam *rds.DescribeDBClusterSnapshotsInput
 
 	createInstanceParam      *rds.CreateDBInstanceInput
 	deleteInstanceParam      *rds.DeleteDBInstanceInput
@@ -91,6 +96,8 @@ func (s *rdsAurora) SetDBClusterIdentifier(id string) Aurora {
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	s.deleteClusterParam.DBClusterIdentifier = aws.String(id)
 	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
+	s.createClusterSnapshotParam.DBClusterIdentifier = aws.String(id)
+	s.describeClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
 	return s
 }
 
@@ -150,6 +157,17 @@ func (s *rdsAurora) SetDBName(name string) Aurora {
 	s.createClusterParam.DatabaseName = aws.String(name)
 	s.restoreInstancePitrParam.DBName = aws.String(name)
 	return s
+}
+
+func (s *rdsAurora) SetSnapshotIdentifier(id string) Aurora {
+	s.createClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
+	s.describeClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsAurora) CreateSnapshot(ctx context.Context) error {
+	_, err := s.core.CreateDBClusterSnapshot(ctx, s.createClusterSnapshotParam)
+	return err
 }
 
 func (s *rdsAurora) Create(ctx context.Context) error {
@@ -245,4 +263,16 @@ func (s *rdsAurora) Describe(ctx context.Context) (*DescCluster, error) {
 	}
 
 	return convertDBCluster(&out.DBClusters[0]), nil
+}
+
+func (s *rdsAurora) DescribeSnapshot(ctx context.Context) (*DescSnapshot, error) {
+	snapshots, err := s.core.DescribeDBClusterSnapshots(ctx, s.describeClusterSnapshotParam)
+	if err != nil {
+		return nil, err
+	}
+	if len(snapshots.DBClusterSnapshots) == 0 {
+		return nil, nil
+	}
+	snapshot := snapshots.DBClusterSnapshots[0]
+	return convertDBClusterSnapshot(&snapshot), nil
 }
