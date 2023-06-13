@@ -62,7 +62,7 @@ type Instance interface {
 	DescribeAll(ctx context.Context) ([]*DescInstance, error)
 	RestorePitr(context.Context) error
 	CreateSnapshot(context.Context) error
-	DescribeSnapshot(context.Context) (*types.DBSnapshot, error)
+	DescribeSnapshot(context.Context) (*DescSnapshot, error)
 }
 
 type rdsInstance struct {
@@ -104,6 +104,20 @@ type DescInstance struct {
 	DBParameterGroups                     []ParameterGroupStatus
 	DBClusterIdentifier                   string
 	ReadReplicaDBClusterIdentifiers       []string
+}
+
+type DescSnapshot struct {
+	DBInstanceIdentifier string
+	DBSnapshotArn        string
+	DBSnapshotIdentifier string
+	Engine               string
+	EngineVersion        string
+	InstanceCreateTime   time.Time
+	PercentProgress      int32
+	SnapshotCreateTime   time.Time
+	SnapshotDatabaseTime time.Time
+	SnapshotType         string
+	Status               string
 }
 
 type DBInstanceStatus string
@@ -324,7 +338,7 @@ func (s *rdsInstance) CreateSnapshot(ctx context.Context) error {
 	return err
 }
 
-func (s *rdsInstance) DescribeSnapshot(ctx context.Context) (*types.DBSnapshot, error) {
+func (s *rdsInstance) DescribeSnapshot(ctx context.Context) (*DescSnapshot, error) {
 	resp, err := s.core.DescribeDBSnapshots(ctx, s.describeSnapshotParam)
 	if err != nil {
 		return nil, err
@@ -332,7 +346,23 @@ func (s *rdsInstance) DescribeSnapshot(ctx context.Context) (*types.DBSnapshot, 
 	if len(resp.DBSnapshots) == 0 {
 		return nil, nil
 	}
-	return &resp.DBSnapshots[0], nil
+	return convertDBSnapshot(&resp.DBSnapshots[0]), nil
+}
+
+func convertDBSnapshot(in *types.DBSnapshot) *DescSnapshot {
+	return &DescSnapshot{
+		DBInstanceIdentifier: aws.ToString(in.DBInstanceIdentifier),
+		DBSnapshotArn:        aws.ToString(in.DBSnapshotArn),
+		DBSnapshotIdentifier: aws.ToString(in.DBSnapshotIdentifier),
+		Engine:               aws.ToString(in.Engine),
+		EngineVersion:        aws.ToString(in.EngineVersion),
+		InstanceCreateTime:   aws.ToTime(in.InstanceCreateTime),
+		PercentProgress:      in.PercentProgress,
+		SnapshotCreateTime:   aws.ToTime(in.SnapshotCreateTime),
+		SnapshotDatabaseTime: aws.ToTime(in.SnapshotDatabaseTime),
+		SnapshotType:         aws.ToString(in.SnapshotType),
+		Status:               aws.ToString(in.Status),
+	}
 }
 
 func convertDBInstance(dbInstance *types.DBInstance) *DescInstance {

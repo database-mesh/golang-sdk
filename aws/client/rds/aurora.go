@@ -53,7 +53,7 @@ type Aurora interface {
 	Delete(context.Context) error
 	Describe(context.Context) (*DescCluster, error)
 	CreateSnapshot(context.Context) error
-	DescribeSnapshot(context.Context) (*DescSnapshot, error)
+	DescribeSnapshot(context.Context) (*DescClusterSnapshot, error)
 }
 
 type rdsAurora struct {
@@ -265,7 +265,7 @@ func (s *rdsAurora) Describe(ctx context.Context) (*DescCluster, error) {
 	return convertDBCluster(&out.DBClusters[0]), nil
 }
 
-func (s *rdsAurora) DescribeSnapshot(ctx context.Context) (*DescSnapshot, error) {
+func (s *rdsAurora) DescribeSnapshot(ctx context.Context) (*DescClusterSnapshot, error) {
 	snapshots, err := s.core.DescribeDBClusterSnapshots(ctx, s.describeClusterSnapshotParam)
 	if err != nil {
 		return nil, err
