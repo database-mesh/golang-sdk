@@ -175,7 +175,7 @@ func (s *rdsAurora) Create(ctx context.Context) error {
 		return err
 	}
 
-	for i := 0; i < int(s.instanceNumber); i++ {
+	for i := 1; i <= int(s.instanceNumber); i++ {
 		instanceIdentifierName := fmt.Sprintf("%s-instance-%d", *s.createClusterParam.DBClusterIdentifier, i)
 		s.SetDBInstanceIdentifier(instanceIdentifierName)
 		if _, err := s.core.CreateDBInstance(ctx, s.createInstanceParam); err != nil {
