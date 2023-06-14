@@ -30,12 +30,15 @@ type Object interface {
 	SetValue(value string) Object
 	SetACL(acl types.ObjectCannedACL) Object
 	SetReader(reader io.Reader) Object
+	SetPrefix(prefix string) Object
+	SetFolderName(folderName string) Object
 
 	Put(context.Context) error
-	Get(context.Context) (string,error)
-	List(context.Context) error
+	Get(context.Context) (string, error)
+	List(context.Context) (fileNames []string, err error)
 	Delete(context.Context) error
 	Head(context.Context) error
+	DeleteFolder(context.Context) error
 }
 
 type object struct {
@@ -45,6 +48,8 @@ type object struct {
 	listObjectsParam  *s3.ListObjectsInput
 	deleteObjectParam *s3.DeleteObjectInput
 	headObjectParam   *s3.HeadObjectInput
+
+	folderName string
 }
 
 func (s *object) SetBucket(bucket string) Object {
@@ -81,9 +86,24 @@ func (s *object) SetValue(value string) Object {
 	return s
 }
 
+func (s *object) SetPrefix(prefix string) Object {
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	s.listObjectsParam.Prefix = aws.String(prefix)
+	return s
+}
+
 func (s *object) Put(ctx context.Context) error {
 	_, err := s.core.PutObject(ctx, s.putObjectParam)
 	return err
+}
+func (s *object) SetFolderName(folderName string) Object {
+	if !strings.HasSuffix(folderName, "/") {
+		folderName += "/"
+	}
+	s.folderName = folderName
+	return s
 }
 
 func (s *object) Get(ctx context.Context) (string, error) {
@@ -99,10 +119,21 @@ func (s *object) Get(ctx context.Context) (string, error) {
 	return string(data), nil
 }
 
-func (s *object) List(ctx context.Context) error {
-	//TODO
-	_, err := s.core.ListObjects(ctx, s.listObjectsParam)
-	return err
+func (s *object) List(ctx context.Context) (fileNames []string, err error) {
+	objs, err := s.core.ListObjects(ctx, s.listObjectsParam)
+	if err != nil {
+		return nil, err
+	}
+
+	prefix := aws.ToString(objs.Prefix)
+	for _, obj := range objs.Contents {
+		if *obj.Key == prefix {
+			continue
+		}
+		fileNames = append(fileNames, *obj.Key)
+	}
+
+	return fileNames, err
 }
 
 func (s *object) Delete(ctx context.Context) error {
@@ -112,5 +143,31 @@ func (s *object) Delete(ctx context.Context) error {
 
 func (s *object) Head(ctx context.Context) error {
 	_, err := s.core.HeadObject(ctx, s.headObjectParam)
+	return err
+}
+
+func (s *object) DeleteFolder(ctx context.Context) error {
+	s.SetPrefix(s.folderName)
+	fileNames, err := s.List(ctx)
+	if err != nil {
+		return err
+	}
+	if len(fileNames) == 0 {
+		return nil
+	}
+
+	objs := make([]types.ObjectIdentifier, len(fileNames))
+	for i, fileName := range fileNames {
+		objs[i] = types.ObjectIdentifier{
+			Key: aws.String(fileName),
+		}
+	}
+
+	_, err = s.core.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: s.deleteObjectParam.Bucket,
+		Delete: &types.Delete{
+			Objects: objs,
+		},
+	})
 	return err
 }
