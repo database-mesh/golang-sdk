@@ -102,4 +102,19 @@ var _ = Describe("Test Cluster", func() {
 			Expect(err).To(BeNil())
 		})
 	})
+	Context("Test restore cluster", func() {
+		It("should success", func() {
+			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			cc := rds.NewService(sess[region]).Cluster()
+
+			cc.SetDBClusterIdentifier("test-cluster-1").
+				SetSnapshotIdentifier("test-cluster-1-final-snapshot").
+				SetEngine("mysql")
+
+			err := cc.RestoreFromSnapshot(ctx)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		})
+	})
 })

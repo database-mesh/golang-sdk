@@ -86,19 +86,21 @@ type Cluster interface {
 	RestorePitr(context.Context) error
 	CreateSnapshot(context.Context) error
 	DescribeSnapshot(context.Context) (*DescClusterSnapshot, error)
+	RestoreFromSnapshot(context.Context) error
 }
 
 type rdsCluster struct {
-	core                           *rds.Client
-	createClusterParam             *rds.CreateDBClusterInput
-	deleteClusterParam             *rds.DeleteDBClusterInput
-	failoverClusterParam           *rds.FailoverDBClusterInput
-	failoverGlobalClusterParam     *rds.FailoverGlobalClusterInput
-	rebootClusterParam             *rds.RebootDBClusterInput
-	describeClusterParam           *rds.DescribeDBClustersInput
-	restoreDBClusterPitrParam      *rds.RestoreDBClusterToPointInTimeInput
-	createDBClusterSnapshotParam   *rds.CreateDBClusterSnapshotInput
-	describeDBClusterSnapshotParam *rds.DescribeDBClusterSnapshotsInput
+	core                              *rds.Client
+	createClusterParam                *rds.CreateDBClusterInput
+	deleteClusterParam                *rds.DeleteDBClusterInput
+	failoverClusterParam              *rds.FailoverDBClusterInput
+	failoverGlobalClusterParam        *rds.FailoverGlobalClusterInput
+	rebootClusterParam                *rds.RebootDBClusterInput
+	describeClusterParam              *rds.DescribeDBClustersInput
+	restoreDBClusterPitrParam         *rds.RestoreDBClusterToPointInTimeInput
+	restoreDBClusterFromSnapshotParam *rds.RestoreDBClusterFromSnapshotInput
+	createDBClusterSnapshotParam      *rds.CreateDBClusterSnapshotInput
+	describeDBClusterSnapshotParam    *rds.DescribeDBClusterSnapshotsInput
 }
 
 func (s *rdsCluster) SetSkipSnapshot(enable bool) Cluster {
@@ -113,8 +115,9 @@ func (s *rdsCluster) SetDBClusterIdentifier(id string) Cluster {
 	s.failoverClusterParam.DBClusterIdentifier = aws.String(id)
 	s.rebootClusterParam.DBClusterIdentifier = aws.String(id)
 	s.describeClusterParam.DBClusterIdentifier = aws.String(id)
-	s.restoreDBClusterPitrParam.DBClusterIdentifier = aws.String(id)
 	s.createDBClusterSnapshotParam.DBClusterIdentifier = aws.String(id)
+	s.restoreDBClusterPitrParam.DBClusterIdentifier = aws.String(id)
+	s.restoreDBClusterFromSnapshotParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -147,6 +150,7 @@ func (s *rdsCluster) FailoverGlobal(ctx context.Context) error {
 // CreateDBClusterInput
 func (s *rdsCluster) SetEngine(engine string) Cluster {
 	s.createClusterParam.Engine = aws.String(engine)
+	s.restoreDBClusterFromSnapshotParam.Engine = aws.String(engine)
 	return s
 }
 
@@ -157,33 +161,39 @@ func (s *rdsCluster) SetAllocatedStorage(size int32) Cluster {
 
 func (s *rdsCluster) SetAvailabilityZones(azs []string) Cluster {
 	s.createClusterParam.AvailabilityZones = azs
+	s.restoreDBClusterFromSnapshotParam.AvailabilityZones = azs
 	return s
 }
 
 func (s *rdsCluster) SetDBClusterInstanceClass(class string) Cluster {
 	s.createClusterParam.DBClusterInstanceClass = aws.String(class)
 	s.restoreDBClusterPitrParam.DBClusterInstanceClass = aws.String(class)
+	s.restoreDBClusterFromSnapshotParam.DBClusterInstanceClass = aws.String(class)
 	return s
 }
 
 func (s *rdsCluster) SetDBSubnetGroupName(name string) Cluster {
 	s.createClusterParam.DBSubnetGroupName = aws.String(name)
 	s.restoreDBClusterPitrParam.DBSubnetGroupName = aws.String(name)
+	s.restoreDBClusterFromSnapshotParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
 func (s *rdsCluster) SetDatabaseName(name string) Cluster {
 	s.createClusterParam.DatabaseName = aws.String(name)
+	s.restoreDBClusterFromSnapshotParam.DatabaseName = aws.String(name)
 	return s
 }
 
 func (s *rdsCluster) SetEngineVersion(version string) Cluster {
 	s.createClusterParam.EngineVersion = aws.String(version)
+	s.restoreDBClusterFromSnapshotParam.EngineVersion = aws.String(version)
 	return s
 }
 
 func (s *rdsCluster) SetEngineMode(mode string) Cluster {
 	s.createClusterParam.EngineMode = aws.String(mode)
+	s.restoreDBClusterFromSnapshotParam.EngineMode = aws.String(mode)
 	return s
 }
 
@@ -199,17 +209,20 @@ func (s *rdsCluster) SetMasterUserPassword(pass string) Cluster {
 
 func (s *rdsCluster) SetVpcSecurityGroupIds(sgs []string) Cluster {
 	s.createClusterParam.VpcSecurityGroupIds = sgs
+	s.restoreDBClusterFromSnapshotParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
 func (s *rdsCluster) SetStorageType(t string) Cluster {
 	s.createClusterParam.StorageType = aws.String(t)
+	s.restoreDBClusterFromSnapshotParam.StorageType = aws.String(t)
 	return s
 }
 
 func (s *rdsCluster) SetIOPS(ps int32) Cluster {
 	s.createClusterParam.Iops = aws.Int32(ps)
 	s.restoreDBClusterPitrParam.Iops = aws.Int32(ps)
+	s.restoreDBClusterFromSnapshotParam.Iops = aws.Int32(ps)
 	return s
 }
 
@@ -225,6 +238,7 @@ func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) Cluster {
 
 func (s *rdsCluster) SetPublicAccessible(enable bool) Cluster {
 	s.createClusterParam.PubliclyAccessible = aws.Bool(enable)
+	s.restoreDBClusterFromSnapshotParam.PubliclyAccessible = aws.Bool(enable)
 	return s
 }
 
@@ -251,6 +265,7 @@ func (s *rdsCluster) SetSourceDBClusterIdentifier(sid string) Cluster {
 
 func (s *rdsCluster) SetBacktraceWindow(w int64) Cluster {
 	s.restoreDBClusterPitrParam.BacktrackWindow = aws.Int64(w)
+	s.restoreDBClusterFromSnapshotParam.BacktrackWindow = aws.Int64(w)
 	return s
 }
 
@@ -277,6 +292,7 @@ func (s *rdsCluster) RestorePitr(ctx context.Context) error {
 func (s *rdsCluster) SetSnapshotIdentifier(id string) Cluster {
 	s.createDBClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
 	s.describeDBClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
+	s.restoreDBClusterFromSnapshotParam.SnapshotIdentifier = aws.String(id)
 	return s
 }
 
@@ -402,4 +418,13 @@ func convertDBClusterSnapshot(in *types.DBClusterSnapshot) *DescClusterSnapshot 
 		SnapshotType:                aws.ToString(in.SnapshotType),
 		Status:                      aws.ToString(in.Status),
 	}
+}
+
+func (s *rdsCluster) RestoreFromSnapshot(ctx context.Context) error {
+	_, err := s.core.RestoreDBClusterFromSnapshot(ctx, s.restoreDBClusterFromSnapshotParam)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -17,6 +17,7 @@ package rds
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -63,6 +64,7 @@ type Instance interface {
 	RestorePitr(context.Context) error
 	CreateSnapshot(context.Context) error
 	DescribeSnapshot(context.Context) (*DescSnapshot, error)
+	RestoreFromSnapshot(context.Context) error
 }
 
 type rdsInstance struct {
@@ -74,6 +76,7 @@ type rdsInstance struct {
 	restoreInstancePitrParam *rds.RestoreDBInstanceToPointInTimeInput
 	createSnapshotParam      *rds.CreateDBSnapshotInput
 	describeSnapshotParam    *rds.DescribeDBSnapshotsInput
+	restoreFromSnapshotParam *rds.RestoreDBInstanceFromDBSnapshotInput
 }
 
 type ReadReplicaStatus struct {
@@ -145,6 +148,7 @@ type ParameterGroupStatus struct {
 // CreateDBInstanceInput
 func (s *rdsInstance) SetEngine(engine string) Instance {
 	s.createInstanceParam.Engine = aws.String(engine)
+	s.restoreFromSnapshotParam.Engine = aws.String(engine)
 	return s
 }
 
@@ -160,6 +164,7 @@ func (s *rdsInstance) SetDBInstanceIdentifier(id string) Instance {
 	s.describeInstanceParam.DBInstanceIdentifier = aws.String(id)
 	s.createSnapshotParam.DBInstanceIdentifier = aws.String(id)
 	s.describeInstanceParam.DBInstanceIdentifier = aws.String(id)
+	s.restoreFromSnapshotParam.DBInstanceIdentifier = aws.String(id)
 	return s
 }
 
@@ -176,6 +181,7 @@ func (s *rdsInstance) SetMasterUserPassword(pass string) Instance {
 func (s *rdsInstance) SetDBInstanceClass(class string) Instance {
 	s.createInstanceParam.DBInstanceClass = aws.String(class)
 	s.restoreInstancePitrParam.DBInstanceClass = aws.String(class)
+	s.restoreFromSnapshotParam.DBInstanceClass = aws.String(class)
 	return s
 }
 
@@ -194,30 +200,37 @@ func (s *rdsInstance) SetIOPS(iops int32) Instance {
 func (s *rdsInstance) SetDBName(name string) Instance {
 	s.createInstanceParam.DBName = aws.String(name)
 	s.restoreInstancePitrParam.DBName = aws.String(name)
+
+	// restore from snapshot does not support SetDBName
+	// s.restoreFromSnapshotParam.DBName = aws.String(name)
 	return s
 }
 
 func (s *rdsInstance) SetVpcSecurityGroupIds(sgs []string) Instance {
 	s.createInstanceParam.VpcSecurityGroupIds = sgs
 	s.restoreInstancePitrParam.VpcSecurityGroupIds = sgs
+	s.restoreFromSnapshotParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
 func (s *rdsInstance) SetDBSubnetGroup(name string) Instance {
 	s.createInstanceParam.DBSubnetGroupName = aws.String(name)
 	s.restoreInstancePitrParam.DBSubnetGroupName = aws.String(name)
+	s.restoreFromSnapshotParam.DBSubnetGroupName = aws.String(name)
 	return s
 }
 
 func (s *rdsInstance) SetMultiAZ(enable bool) Instance {
 	s.createInstanceParam.MultiAZ = aws.Bool(enable)
 	s.restoreInstancePitrParam.MultiAZ = aws.Bool(enable)
+	s.restoreFromSnapshotParam.MultiAZ = aws.Bool(enable)
 	return s
 }
 
 func (s *rdsInstance) SetAvailabilityZones(az string) Instance {
 	s.createInstanceParam.AvailabilityZone = aws.String(az)
 	s.restoreInstancePitrParam.AvailabilityZone = aws.String(az)
+	s.restoreFromSnapshotParam.AvailabilityZone = aws.String(az)
 	return s
 }
 
@@ -330,6 +343,7 @@ func (s *rdsInstance) RestorePitr(ctx context.Context) error {
 func (s *rdsInstance) SetSnapshotIdentifier(id string) Instance {
 	s.createSnapshotParam.DBSnapshotIdentifier = aws.String(id)
 	s.describeSnapshotParam.DBSnapshotIdentifier = aws.String(id)
+	s.restoreFromSnapshotParam.DBSnapshotIdentifier = aws.String(id)
 	return s
 }
 
@@ -474,4 +488,14 @@ func (s *rdsInstance) DescribeAll(ctx context.Context) ([]*DescInstance, error) 
 		descs = append(descs, convertDBInstance(&dbInstance))
 	}
 	return descs, nil
+}
+
+func (s *rdsInstance) RestoreFromSnapshot(ctx context.Context) error {
+	_, err := s.core.RestoreDBInstanceFromDBSnapshot(ctx, s.restoreFromSnapshotParam)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+
+	return nil
 }

@@ -74,6 +74,7 @@ var _ = Describe("Aurora", func() {
 			SetMasterUserPassword("12345678").
 			SetDBInstanceClass("db.t3.medium").
 			SetInstanceNumber(3)
+
 		Expect(aurora.Create(context.Background())).To(BeNil())
 	})
 
@@ -97,5 +98,20 @@ var _ = Describe("Aurora", func() {
 		Expect(snapshot).ToNot(BeNil())
 		d, _ := json.MarshalIndent(snapshot, "", "  ")
 		fmt.Printf("snapshot: %+v\n", string(d))
+	})
+
+	It("should restore aurora cluster from snapshot", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		aurora := rds.NewService(sess[region]).Aurora()
+
+		aurora.SetDBClusterIdentifier("test-restore-aws-aurora-from-snapshot").
+			SetSnapshotIdentifier("database-for-console-test-1-instance-1-snapshot").
+			SetEngine("aurora-mysql").
+			SetInstanceNumber(2).
+			SetDBInstanceClass("db.t3.medium")
+
+		err := aurora.RestoreFromSnapshot(ctx)
+
+		Expect(err).To(BeNil())
 	})
 })

@@ -56,20 +56,14 @@ var _ = Describe("instance", func() {
 		instance.SetEngine("mysql").
 			SetEngineVersion("5.7").
 			SetDBInstanceClass("db.t3.micro").
-			SetDBInstanceIdentifier("test2").
+			SetDBInstanceIdentifier("test-public").
 			SetMasterUsername("root").
 			SetMasterUserPassword("password").
-			SetAllocatedStorage(20)
+			SetAllocatedStorage(20).
+			SetDBName("test_db").
+			SetPublicAccessible(true)
 
-		//db, err := instance.Create(context.Background())
-		//Expect(err).To(BeNil())
-		//Expect(db).ToNot(BeNil())
-
-		ins, err := instance.Describe(context.Background())
-		Expect(err).To(BeNil())
-		Expect(ins).ToNot(BeNil())
-		d, _ := json.MarshalIndent(ins, "", "  ")
-		fmt.Println(string(d))
+		Expect(instance.Create(ctx)).To(BeNil())
 	})
 
 	It("should delete instance", func() {
@@ -82,14 +76,8 @@ var _ = Describe("instance", func() {
 		instance.SetDeleteAutomateBackups(false).
 			SetSkipFinalSnapshot(true).
 			SetDBInstanceIdentifier("test2")
-		//err := instance.Delete(context.Background())
-		//Expect(err).To(BeNil())
-
-		ins, err := instance.Describe(context.Background())
+		err := instance.Delete(ctx)
 		Expect(err).To(BeNil())
-		Expect(ins).ToNot(BeNil())
-		d, _ := json.MarshalIndent(ins, "", "  ")
-		fmt.Println(string(d))
 	})
 
 	It("should create snapshot success", func() {
@@ -139,5 +127,15 @@ var _ = Describe("instance", func() {
 		Expect(resp).ToNot(BeNil())
 		d, _ := json.MarshalIndent(resp, "", "  ")
 		fmt.Println(string(d))
+	})
+
+	It("should restore instance success", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		instance := rds.NewService(sess[region]).Instance()
+
+		instance.SetSnapshotIdentifier("test-public-snapshot-20230616").
+			SetDBInstanceIdentifier("test-public-restore-3")
+
+		Expect(instance.RestoreFromSnapshot(ctx)).To(BeNil())
 	})
 })
