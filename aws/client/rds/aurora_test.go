@@ -35,15 +35,15 @@ var _ = Describe("Aurora", func() {
 			region = v
 		}
 		if v, ok := os.LookupEnv("AWS_ACCESS_KEY_ID"); ok {
-			accessKey = v
+			accessKeyId = v
 		}
 		if v, ok := os.LookupEnv("AWS_SECRET_ACCESS_KEY"); ok {
-			secretKey = v
+			secretAccessKey = v
 		}
 	})
 
 	It("should be able to describe an aurora cluster", func() {
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
 		aurora.SetEngineVersion("5.7").
@@ -64,7 +64,7 @@ var _ = Describe("Aurora", func() {
 	})
 
 	It("should create aws aurora with 3 replicas", func() {
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
 		aurora.SetEngineVersion("5.7").
@@ -79,7 +79,7 @@ var _ = Describe("Aurora", func() {
 	})
 
 	It("should delete aws aurora with 3 replicas", func() {
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
 		aurora.SetDBClusterIdentifier("test-create-aws-aurora-with-replicas3").
@@ -89,7 +89,7 @@ var _ = Describe("Aurora", func() {
 	})
 
 	It("should get aurora cluster snapshot", func() {
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
 		aurora.SetSnapshotIdentifier("database-for-console-test-1-instance-1-snapshot")
@@ -101,7 +101,7 @@ var _ = Describe("Aurora", func() {
 	})
 
 	It("should restore aurora cluster from snapshot", func() {
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
 		aurora.SetDBClusterIdentifier("test-restore-aws-aurora-from-snapshot").

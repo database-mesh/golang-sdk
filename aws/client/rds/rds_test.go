@@ -41,9 +41,9 @@ const (
 
 func Test_CreateRDSInstance(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Instance().
 		SetEngine("mysql").
 		SetEngineVersion("8.0.28").
@@ -65,9 +65,9 @@ func Test_CreateRDSInstance(t *testing.T) {
 
 func Test_CreateRDSInstanceWithMultiAZ(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Instance().
 		SetEngine("mysql").
 		SetEngineVersion("8.0.28").
@@ -90,9 +90,9 @@ func Test_CreateRDSInstanceWithMultiAZ(t *testing.T) {
 
 func Test_DescribeRDSInstance(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	output, err := NewService(sess[region]).Instance().
 		SetDBInstanceIdentifier(TestDBIdentifier).
 		Describe(context.TODO())
@@ -106,9 +106,9 @@ func Test_DescribeRDSInstance(t *testing.T) {
 
 func Test_DeleteRDSInstance(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Instance().SetDBInstanceIdentifier("foo2-instance-1").SetSkipFinalSnapshot(true).SetDeleteAutomateBackups(false).Delete(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
@@ -118,9 +118,9 @@ func Test_DeleteRDSInstance(t *testing.T) {
 
 func Test_RebootRDSInstance(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Instance().SetDBInstanceIdentifier(TestDBIdentifier).SetForceFailover(true).Reboot(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
@@ -130,9 +130,9 @@ func Test_RebootRDSInstance(t *testing.T) {
 
 func Test_DescRDSInstance(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	desc, err := NewService(sess[region]).Instance().SetDBInstanceIdentifier(TestDBIdentifier).Describe(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
@@ -143,9 +143,9 @@ func Test_DescRDSInstance(t *testing.T) {
 
 func Test_CreateRDSCluster(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Cluster().
 		SetEngine("mysql").
 		SetEngineVersion("8.0.28").
@@ -169,9 +169,9 @@ func Test_CreateRDSCluster(t *testing.T) {
 
 func Test_DeleteRDSCluster(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Cluster().SetDBClusterIdentifier("foo2").SetSkipFinalSnapshot(true).Delete(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
@@ -181,9 +181,9 @@ func Test_DeleteRDSCluster(t *testing.T) {
 
 func Test_FailoverRDSCluster(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Cluster().SetDBClusterIdentifier(TestDBIdentifier).Failover(context.TODO())
 	if err != nil {
 		t.Fatalf("%+v\n", err)
@@ -193,9 +193,9 @@ func Test_FailoverRDSCluster(t *testing.T) {
 
 func Test_DescribeRDSCluster(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	output, err := NewService(sess[region]).Cluster().
 		SetDBClusterIdentifier("test").
 		Describe(context.TODO())
@@ -209,9 +209,9 @@ func Test_DescribeRDSCluster(t *testing.T) {
 
 func Test_CreateRDSSubnetsGroup(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	client := NewService(sess[region]).cluster.core
 	snginput := &rds.CreateDBSubnetGroupInput{
 		SubnetIds:                []string{"subnet-gg", "subnet-gg", "subnet-gg"},
@@ -227,9 +227,9 @@ func Test_CreateRDSSubnetsGroup(t *testing.T) {
 
 func Test_CreateRDSAurora(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 
 	err := NewService(sess[region]).Cluster().
 		SetEngine("aurora-mysql").
@@ -249,9 +249,9 @@ func Test_CreateRDSAurora(t *testing.T) {
 
 func Test_CreateRDSInstanceForAurora(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	err := NewService(sess[region]).Instance().
 		SetEngine("aurora-mysql").
 		SetDBInstanceIdentifier("foo2-instance-1").
@@ -269,9 +269,9 @@ func Test_CreateRDSInstanceForAurora(t *testing.T) {
 
 func Test_DescribeRDSAurora(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 	input := &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(TestDBIdentifier),
 	}
@@ -295,9 +295,9 @@ func Test_DescribeRDSAurora(t *testing.T) {
 
 func Test_CreateAuroraWithPrimary(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 
 	err := NewService(sess[region]).Aurora().
 		SetEngine("aurora-mysql").
@@ -320,9 +320,9 @@ func Test_CreateAuroraWithPrimary(t *testing.T) {
 
 func Test_FailoverPrimary(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 
 	err := NewService(sess[region]).Aurora().
 		SetDBClusterIdentifier("test").
@@ -337,9 +337,9 @@ func Test_FailoverPrimary(t *testing.T) {
 
 func Test_DeleteAurora(t *testing.T) {
 	region, _ := os.LookupEnv(EnvAWSRegion)
-	accessKey, _ := os.LookupEnv(EnvAWSAccessKey)
+	accessKeyId, _ := os.LookupEnv(EnvAWSAccessKey)
 	secretAccessKey, _ := os.LookupEnv(EnvAWSSecretAccessKey)
-	sess := dbmesh.NewSessions().SetCredential(region, accessKey, secretAccessKey).Build()
+	sess := dbmesh.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 
 	err := NewService(sess[region]).Aurora().
 		SetDBInstanceIdentifier("foo-instance-1").

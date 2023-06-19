@@ -30,7 +30,7 @@ type awsCreds struct {
 
 type credential struct {
 	region          string
-	accessKey       string
+	accessKeyId       string
 	secretAccessKey string
 }
 
@@ -38,10 +38,10 @@ func NewSessions() *awsCreds {
 	return &awsCreds{credentials: []credential{}}
 }
 
-func (s *awsCreds) SetCredential(region, accessKey, secretAccessKey string) *awsCreds {
+func (s *awsCreds) SetCredential(region, accessKeyId, secretAccessKey string) *awsCreds {
 	s.credentials = append(s.credentials, credential{
 		region:          region,
-		accessKey:       accessKey,
+		accessKeyId:       accessKeyId,
 		secretAccessKey: secretAccessKey,
 	})
 	return s
@@ -50,7 +50,7 @@ func (s *awsCreds) SetCredential(region, accessKey, secretAccessKey string) *aws
 func (s *awsCreds) Build() Sessions {
 	sess := map[string]aws.Config{}
 	for _, v := range s.credentials {
-		as, err := newAWSSession(v.region, v.accessKey, v.secretAccessKey)
+		as, err := newAWSSession(v.region, v.accessKeyId, v.secretAccessKey)
 		if err != nil {
 			continue
 		}

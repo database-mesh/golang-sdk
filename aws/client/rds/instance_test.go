@@ -33,10 +33,10 @@ var ctx = context.Background()
 var _ = Describe("instance", func() {
 	Context("describe instance", func() {
 		It("should describe instance", func() {
-			if region == "" || accessKey == "" || secretKey == "" {
-				Skip("region, accessKey, secretKey are required")
+			if region == "" || accessKeyId == "" || secretAccessKey == "" {
+				Skip("region, accessKeyId, secretAccessKey are required")
 			}
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			instance := rds.NewService(sess[region]).Instance()
 
 			instance.SetDBInstanceIdentifier("test1")
@@ -47,10 +47,10 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should create instance", func() {
-		if region == "" || accessKey == "" || secretKey == "" {
-			Skip("region, accessKey, secretKey are required")
+		if region == "" || accessKeyId == "" || secretAccessKey == "" {
+			Skip("region, accessKeyId, secretAccessKey are required")
 		}
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
 		instance.SetEngine("mysql").
@@ -67,10 +67,10 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should delete instance", func() {
-		if region == "" || accessKey == "" || secretKey == "" {
-			Skip("region, accessKey, secretKey are required")
+		if region == "" || accessKeyId == "" || secretAccessKey == "" {
+			Skip("region, accessKeyId, secretAccessKey are required")
 		}
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
 		instance.SetDeleteAutomateBackups(false).
@@ -81,10 +81,10 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should create snapshot success", func() {
-		if region == "" || accessKey == "" || secretKey == "" {
-			Skip("region, accessKey, secretKey are required")
+		if region == "" || accessKeyId == "" || secretAccessKey == "" {
+			Skip("region, accessKeyId, secretAccessKey are required")
 		}
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
 		instance.SetDBInstanceIdentifier("test2")
@@ -101,10 +101,10 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should get snapshot success", func() {
-		if region == "" || accessKey == "" || secretKey == "" {
-			Skip("region, accessKey, secretKey are required")
+		if region == "" || accessKeyId == "" || secretAccessKey == "" {
+			Skip("region, accessKeyId, secretAccessKey are required")
 		}
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
 		instance.SetDBInstanceIdentifier("test2")
@@ -115,10 +115,10 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should describe instances by filter", func() {
-		if region == "" || accessKey == "" || secretKey == "" {
-			Skip("region, accessKey, secretKey are required")
+		if region == "" || accessKeyId == "" || secretAccessKey == "" {
+			Skip("region, accessKeyId, secretAccessKey are required")
 		}
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
 		instance.SetFilter("db-cluster-id", []string{"database-1-op"})
@@ -130,7 +130,7 @@ var _ = Describe("instance", func() {
 	})
 
 	It("should restore instance success", func() {
-		sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
 		instance.SetSnapshotIdentifier("test-public-snapshot-20230616").

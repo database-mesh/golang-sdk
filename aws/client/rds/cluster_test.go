@@ -29,10 +29,10 @@ import (
 var _ = Describe("Test Cluster", func() {
 	Context("Test create cluster", func() {
 		It("should success", func() {
-			if region == "" || accessKey == "" || secretKey == "" {
-				Skip("region, accessKey, secretKey are required")
+			if region == "" || accessKeyId == "" || secretAccessKey == "" {
+				Skip("region, accessKeyId, secretAccessKey are required")
 			}
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			cc := rds.NewService(sess[region]).Cluster()
 
 			cc.SetDBClusterIdentifier("test-cluster-1").
@@ -55,10 +55,10 @@ var _ = Describe("Test Cluster", func() {
 
 	Context("Test describe cluster", func() {
 		It("should success", func() {
-			if region == "" || accessKey == "" || secretKey == "" {
-				Skip("region, accessKey, secretKey are required")
+			if region == "" || accessKeyId == "" || secretAccessKey == "" {
+				Skip("region, accessKeyId, secretAccessKey are required")
 			}
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			cc := rds.NewService(sess[region]).Cluster()
 
 			cc.SetDBClusterIdentifier("test-cluster-1")
@@ -71,10 +71,10 @@ var _ = Describe("Test Cluster", func() {
 
 	Context("Test delete cluster", func() {
 		It("should success when skip final snapshot", func() {
-			if region == "" || accessKey == "" || secretKey == "" {
-				Skip("region, accessKey, secretKey are required")
+			if region == "" || accessKeyId == "" || secretAccessKey == "" {
+				Skip("region, accessKeyId, secretAccessKey are required")
 			}
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			cc := rds.NewService(sess[region]).Cluster()
 			cc.SetDBClusterIdentifier("test-cluster-1").
 				SetSkipFinalSnapshot(true)
@@ -87,10 +87,10 @@ var _ = Describe("Test Cluster", func() {
 		})
 
 		It("should success when set final snapshot", func() {
-			if region == "" || accessKey == "" || secretKey == "" {
-				Skip("region, accessKey, secretKey are required")
+			if region == "" || accessKeyId == "" || secretAccessKey == "" {
+				Skip("region, accessKeyId, secretAccessKey are required")
 			}
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			cc := rds.NewService(sess[region]).Cluster()
 
 			cc.SetDBClusterIdentifier("test-cluster-1").
@@ -104,7 +104,7 @@ var _ = Describe("Test Cluster", func() {
 	})
 	Context("Test restore cluster", func() {
 		It("should success", func() {
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			cc := rds.NewService(sess[region]).Cluster()
 
 			cc.SetDBClusterIdentifier("test-cluster-1").

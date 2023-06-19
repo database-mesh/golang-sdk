@@ -26,8 +26,8 @@ import (
 
 var (
 	region    string
-	accessKey string
-	secretKey string
+	accessKeyId string
+	secretAccessKey string
 )
 
 func TestRds(t *testing.T) {
@@ -39,9 +39,9 @@ var _ = BeforeSuite(func() {
 		region = v
 	}
 	if v, ok := os.LookupEnv("AWS_ACCESS_KEY_ID"); ok {
-		accessKey = v
+		accessKeyId = v
 	}
 	if v, ok := os.LookupEnv("AWS_SECRET_ACCESS_KEY"); ok {
-		secretKey = v
+		secretAccessKey = v
 	}
 })

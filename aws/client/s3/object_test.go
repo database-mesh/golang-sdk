@@ -28,7 +28,7 @@ import (
 var _ = Describe("Object", func() {
 	Context("Put Object", func() {
 		It("should put object", func() {
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			object := s3.NewService(sess[region]).Object()
 			object.SetBucket("test-for-create-bucket").
 				SetKey("test").
@@ -37,7 +37,7 @@ var _ = Describe("Object", func() {
 		})
 		Context("Get Object", func() {
 			It("should get object", func() {
-				sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+				sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 				object := s3.NewService(sess[region]).Object()
 				object.SetBucket("test-for-create-bucket").
 					SetKey("test")
@@ -48,7 +48,7 @@ var _ = Describe("Object", func() {
 		})
 		Context("List Objects", func() {
 			It("should list objects", func() {
-				sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+				sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 				object := s3.NewService(sess[region]).Object()
 
 				object.SetBucket("test-for-create-bucket")
@@ -63,7 +63,7 @@ var _ = Describe("Object", func() {
 
 		Context("Delete Folder", func() {
 			It("should delete folder", func() {
-				sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+				sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 				object := s3.NewService(sess[region]).Object()
 
 				object.SetBucket("test-for-create-bucket")

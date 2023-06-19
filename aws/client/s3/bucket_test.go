@@ -29,7 +29,7 @@ import (
 var _ = Describe("Bucket", func() {
 	Context("Create Bucket", func() {
 		It("should create bucket", func() {
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			bucket := s3.NewService(sess[region]).Bucket()
 			bucket.SetBucket("test-for-create-bucket").
 				SetBucketLocationConstraint("ap-southeast-1")
@@ -40,7 +40,7 @@ var _ = Describe("Bucket", func() {
 		})
 
 		It("should create bucket fail with already exits error", func() {
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			bucket := s3.NewService(sess[region]).Bucket()
 			bucket.SetBucket("test-for-create-bucket").
 				SetBucketLocationConstraint("ap-southeast-1")
@@ -52,7 +52,7 @@ var _ = Describe("Bucket", func() {
 	})
 	Context("List buckets", func() {
 		It("should list buckets", func() {
-			sess := aws.NewSessions().SetCredential(region, accessKey, secretKey).Build()
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			bucket := s3.NewService(sess[region]).Bucket()
 			buckets, err := bucket.List(ctx)
 			Expect(err).To(BeNil())
