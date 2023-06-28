@@ -48,6 +48,13 @@ const (
 	DBClusterStatusUpgrading       DBClusterStatus = "upgrading"
 )
 
+type DBClusterRestoreType string
+
+const (
+	DBClusterRestoreTypeFullCopy    DBClusterRestoreType = "full-copy"
+	DBClusterRestoreTypeCopyOnWrite DBClusterRestoreType = "copy-on-write"
+)
+
 type Cluster interface {
 	SetDBClusterIdentifier(id string) Cluster
 	SetTargetDBInstanceIdentifier(id string) Cluster
@@ -69,8 +76,8 @@ type Cluster interface {
 	SetSkipFinalSnapshot(skip bool) Cluster
 	SetSourceDBClusterIdentifier(sid string) Cluster
 	SetBacktraceWindow(w int64) Cluster
-	SetRestoreToTime(rt *time.Time) Cluster
-	SetRestoreType(t string) Cluster
+	SetRestoreToTime(rt time.Time) Cluster
+	SetRestoreType(t DBClusterRestoreType) Cluster
 	SetUseLatestRestorableTime(enable bool) Cluster
 	SetPublicAccessible(enable bool) Cluster
 	SetSnapshotIdentifier(id string) Cluster
@@ -87,6 +94,7 @@ type Cluster interface {
 	CreateSnapshot(context.Context) error
 	DescribeSnapshot(context.Context) (*DescClusterSnapshot, error)
 	RestoreFromSnapshot(context.Context) error
+	RestoreToPitr(context.Context) error
 }
 
 type rdsCluster struct {
@@ -181,7 +189,6 @@ func (s *rdsCluster) SetDBSubnetGroupName(name string) Cluster {
 
 func (s *rdsCluster) SetDatabaseName(name string) Cluster {
 	s.createClusterParam.DatabaseName = aws.String(name)
-	s.restoreDBClusterFromSnapshotParam.DatabaseName = aws.String(name)
 	return s
 }
 
@@ -194,6 +201,7 @@ func (s *rdsCluster) SetEngineVersion(version string) Cluster {
 func (s *rdsCluster) SetEngineMode(mode string) Cluster {
 	s.createClusterParam.EngineMode = aws.String(mode)
 	s.restoreDBClusterFromSnapshotParam.EngineMode = aws.String(mode)
+	s.restoreDBClusterPitrParam.EngineMode = aws.String(mode)
 	return s
 }
 
@@ -210,12 +218,14 @@ func (s *rdsCluster) SetMasterUserPassword(pass string) Cluster {
 func (s *rdsCluster) SetVpcSecurityGroupIds(sgs []string) Cluster {
 	s.createClusterParam.VpcSecurityGroupIds = sgs
 	s.restoreDBClusterFromSnapshotParam.VpcSecurityGroupIds = sgs
+	s.restoreDBClusterPitrParam.VpcSecurityGroupIds = sgs
 	return s
 }
 
 func (s *rdsCluster) SetStorageType(t string) Cluster {
 	s.createClusterParam.StorageType = aws.String(t)
 	s.restoreDBClusterFromSnapshotParam.StorageType = aws.String(t)
+	s.restoreDBClusterPitrParam.StorageType = aws.String(t)
 	return s
 }
 
@@ -239,6 +249,7 @@ func (s *rdsCluster) SetSkipFinalSnapshot(skip bool) Cluster {
 func (s *rdsCluster) SetPublicAccessible(enable bool) Cluster {
 	s.createClusterParam.PubliclyAccessible = aws.Bool(enable)
 	s.restoreDBClusterFromSnapshotParam.PubliclyAccessible = aws.Bool(enable)
+	s.restoreDBClusterPitrParam.PubliclyAccessible = aws.Bool(enable)
 	return s
 }
 
@@ -269,13 +280,13 @@ func (s *rdsCluster) SetBacktraceWindow(w int64) Cluster {
 	return s
 }
 
-func (s *rdsCluster) SetRestoreToTime(rt *time.Time) Cluster {
-	s.restoreDBClusterPitrParam.RestoreToTime = rt
+func (s *rdsCluster) SetRestoreToTime(rt time.Time) Cluster {
+	s.restoreDBClusterPitrParam.RestoreToTime = aws.Time(rt)
 	return s
 }
 
-func (s *rdsCluster) SetRestoreType(t string) Cluster {
-	s.restoreDBClusterPitrParam.RestoreType = aws.String(t)
+func (s *rdsCluster) SetRestoreType(t DBClusterRestoreType) Cluster {
+	s.restoreDBClusterPitrParam.RestoreType = aws.String(string(t))
 	return s
 }
 
@@ -422,6 +433,15 @@ func convertDBClusterSnapshot(in *types.DBClusterSnapshot) *DescClusterSnapshot 
 
 func (s *rdsCluster) RestoreFromSnapshot(ctx context.Context) error {
 	_, err := s.core.RestoreDBClusterFromSnapshot(ctx, s.restoreDBClusterFromSnapshotParam)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *rdsCluster) RestoreToPitr(ctx context.Context) error {
+	_, err := s.core.RestoreDBClusterToPointInTime(ctx, s.restoreDBClusterPitrParam)
 	if err != nil {
 		return err
 	}

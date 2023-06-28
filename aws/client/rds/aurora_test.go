@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/database-mesh/golang-sdk/aws"
 	"github.com/database-mesh/golang-sdk/aws/client/rds"
@@ -46,21 +47,13 @@ var _ = Describe("Aurora", func() {
 		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
-		aurora.SetEngineVersion("5.7").
-			SetEngine("aurora-mysql").
-			SetDBClusterIdentifier("test").
-			SetMasterUsername("root").
-			SetMasterUserPassword("12345678")
-		//Expect(aurora.Create(context.Background())).To(BeNil())
-		aurora.SetDBClusterIdentifier("test")
+		aurora.SetDBClusterIdentifier("test-dataabse-pitr")
 		cluster, err := aurora.Describe(context.Background())
 		Expect(err).To(BeNil())
 		Expect(cluster).ToNot(BeNil())
 
 		b, _ := json.MarshalIndent(cluster, "", "  ")
 		fmt.Printf("cluster: %+v\n", string(b))
-
-		Expect(aurora.Delete(context.Background())).To(BeNil())
 	})
 
 	It("should create aws aurora with 3 replicas", func() {
@@ -113,5 +106,23 @@ var _ = Describe("Aurora", func() {
 		err := aurora.RestoreFromSnapshot(ctx)
 
 		Expect(err).To(BeNil())
+	})
+
+	It("should restore aurora cluster to pitr", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
+		aurora := rds.NewService(sess[region]).Aurora()
+
+		restoreTime := "2023-06-28T07:43:29Z"
+		t, err := time.Parse(time.RFC3339, restoreTime)
+		Expect(err).To(BeNil())
+		aurora.SetDBClusterIdentifier("test-restore-aws-aurora-from-pitr").
+			SetSourceDBClusterIdentifier("test-dataabse-pitr").
+			SetRestoreType(rds.DBClusterRestoreTypeFullCopy).
+			SetRestoreToTime(t).
+			SetInstanceNumber(1).
+			SetDBInstanceClass("db.t3.medium").
+			SetEngine("aurora-mysql")
+
+		Expect(aurora.RestoreToPitr(ctx)).To(BeNil())
 	})
 })

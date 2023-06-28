@@ -129,7 +129,7 @@ var _ = Describe("instance", func() {
 		fmt.Println(string(d))
 	})
 
-	It("should restore instance success", func() {
+	It("should restore instance from snapshot success", func() {
 		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		instance := rds.NewService(sess[region]).Instance()
 
@@ -137,5 +137,19 @@ var _ = Describe("instance", func() {
 			SetDBInstanceIdentifier("test-public-restore-3")
 
 		Expect(instance.RestoreFromSnapshot(ctx)).To(BeNil())
+	})
+
+	It("should restore to pitr success", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
+		instance := rds.NewService(sess[region]).Instance()
+
+		restoreTime := "2023-06-28T09:52:00Z"
+		t, err := time.Parse(time.RFC3339, restoreTime)
+		Expect(err).To(BeNil())
+		instance.SetSourceDBInstanceIdentifier("database-1-test-for-pitr").
+			SetTargetDBInstanceIdentifier("database-1-test-for-pitr-restore").
+			SetRestoreTime(t)
+
+		Expect(instance.RestoreToPitr(ctx)).To(BeNil())
 	})
 })
