@@ -17,7 +17,6 @@ package rds
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -45,7 +44,7 @@ type Instance interface {
 	SetSkipFinalSnapshot(skip bool) Instance
 	SetForceFailover(force bool) Instance
 	SetTargetDBInstanceIdentifier(id string) Instance
-	SetRestoreTime(rt *time.Time) Instance
+	SetRestoreTime(rt time.Time) Instance
 	SetSourceDBInstanceAutomatedBackupsArn(arn string) Instance
 	SetSourceDBInstanceIdentifier(id string) Instance
 	SetSourceDBiResourceId(dbi string) Instance
@@ -65,6 +64,7 @@ type Instance interface {
 	CreateSnapshot(context.Context) error
 	DescribeSnapshot(context.Context) (*DescSnapshot, error)
 	RestoreFromSnapshot(context.Context) error
+	RestoreToPitr(context.Context) error
 }
 
 type rdsInstance struct {
@@ -149,6 +149,7 @@ type ParameterGroupStatus struct {
 func (s *rdsInstance) SetEngine(engine string) Instance {
 	s.createInstanceParam.Engine = aws.String(engine)
 	s.restoreFromSnapshotParam.Engine = aws.String(engine)
+	s.restoreInstancePitrParam.Engine = aws.String(engine)
 	return s
 }
 
@@ -194,12 +195,12 @@ func (s *rdsInstance) SetAllocatedStorage(size int32) Instance {
 func (s *rdsInstance) SetIOPS(iops int32) Instance {
 	s.createInstanceParam.Iops = aws.Int32(iops)
 	s.restoreInstancePitrParam.Iops = aws.Int32(iops)
+	s.restoreFromSnapshotParam.Iops = aws.Int32(iops)
 	return s
 }
 
 func (s *rdsInstance) SetDBName(name string) Instance {
 	s.createInstanceParam.DBName = aws.String(name)
-	s.restoreInstancePitrParam.DBName = aws.String(name)
 
 	// restore from snapshot does not support SetDBName
 	// s.restoreFromSnapshotParam.DBName = aws.String(name)
@@ -234,11 +235,6 @@ func (s *rdsInstance) SetAvailabilityZones(az string) Instance {
 	return s
 }
 
-func (s *rdsInstance) Create(ctx context.Context) error {
-	_, err := s.core.CreateDBInstance(ctx, s.createInstanceParam)
-	return err
-}
-
 func (s *rdsInstance) SetDeleteAutomateBackups(enable bool) Instance {
 	s.deleteInstanceParam.DeleteAutomatedBackups = aws.Bool(enable)
 	return s
@@ -254,30 +250,12 @@ func (s *rdsInstance) SetSkipFinalSnapshot(skip bool) Instance {
 	return s
 }
 
-func (s *rdsInstance) Delete(ctx context.Context) error {
-	_, err := s.core.DeleteDBInstance(ctx, s.deleteInstanceParam)
-	if err != nil {
-		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
 // SetForceFailover
 // NOTE: ForceFailover cannot be specified since the instance is not configured for either MultiAZ or High Availability
 // RebootDBInstanceInput
 func (s *rdsInstance) SetForceFailover(force bool) Instance {
 	s.rebootInstanceParam.ForceFailover = aws.Bool(force)
 	return s
-}
-
-// Reboot
-// NOTE: Can only reboot db instances with state in: available, storage-optimization, incompatible-credentials, incompatible-parameters.
-func (s *rdsInstance) Reboot(ctx context.Context) error {
-	_, err := s.core.RebootDBInstance(ctx, s.rebootInstanceParam)
-	return err
 }
 
 func (s *rdsInstance) SetTargetDBInstanceIdentifier(tid string) Instance {
@@ -295,8 +273,8 @@ func (s *rdsInstance) SetTargetDBInstanceIdentifier(tid string) Instance {
 // 	return s
 // }
 
-func (s *rdsInstance) SetRestoreTime(rt *time.Time) Instance {
-	s.restoreInstancePitrParam.RestoreTime = rt
+func (s *rdsInstance) SetRestoreTime(rt time.Time) Instance {
+	s.restoreInstancePitrParam.RestoreTime = aws.Time(rt)
 	return s
 }
 
@@ -327,11 +305,15 @@ func (s *rdsInstance) SetDBClusterIdentifier(id string) Instance {
 
 func (s *rdsInstance) SetPublicAccessible(enable bool) Instance {
 	s.createInstanceParam.PubliclyAccessible = aws.Bool(enable)
+	s.restoreInstancePitrParam.PubliclyAccessible = aws.Bool(enable)
+	s.restoreFromSnapshotParam.PubliclyAccessible = aws.Bool(enable)
 	return s
 }
 
 func (s *rdsInstance) SetLicenseModel(model string) Instance {
 	s.createInstanceParam.LicenseModel = aws.String(model)
+	s.restoreInstancePitrParam.LicenseModel = aws.String(model)
+	s.restoreFromSnapshotParam.LicenseModel = aws.String(model)
 	return s
 }
 
@@ -345,6 +327,49 @@ func (s *rdsInstance) SetSnapshotIdentifier(id string) Instance {
 	s.describeSnapshotParam.DBSnapshotIdentifier = aws.String(id)
 	s.restoreFromSnapshotParam.DBSnapshotIdentifier = aws.String(id)
 	return s
+}
+
+func (s *rdsInstance) SetFilter(name string, values []string) Instance {
+	var exists = false
+	for _, filter := range s.describeInstanceParam.Filters {
+		if filter.Name == nil {
+			continue
+		}
+		if *filter.Name == name {
+			filter.Values = values
+			exists = true
+		}
+	}
+	if !exists {
+		s.describeInstanceParam.Filters = append(s.describeInstanceParam.Filters, types.Filter{
+			Name:   aws.String(name),
+			Values: values,
+		})
+	}
+	return s
+}
+
+func (s *rdsInstance) Create(ctx context.Context) error {
+	_, err := s.core.CreateDBInstance(ctx, s.createInstanceParam)
+	return err
+}
+
+func (s *rdsInstance) Delete(ctx context.Context) error {
+	_, err := s.core.DeleteDBInstance(ctx, s.deleteInstanceParam)
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+// Reboot
+// NOTE: Can only reboot db instances with state in: available, storage-optimization, incompatible-credentials, incompatible-parameters.
+func (s *rdsInstance) Reboot(ctx context.Context) error {
+	_, err := s.core.RebootDBInstance(ctx, s.rebootInstanceParam)
+	return err
 }
 
 func (s *rdsInstance) CreateSnapshot(ctx context.Context) error {
@@ -361,6 +386,55 @@ func (s *rdsInstance) DescribeSnapshot(ctx context.Context) (*DescSnapshot, erro
 		return nil, nil
 	}
 	return convertDBSnapshot(&resp.DBSnapshots[0]), nil
+}
+
+func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
+	output, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	desc := &DescInstance{}
+	if len(output.DBInstances) > 0 {
+		desc = convertDBInstance(&output.DBInstances[0])
+	}
+	return desc, nil
+}
+
+func (s *rdsInstance) DescribeAll(ctx context.Context) ([]*DescInstance, error) {
+	output, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var descs []*DescInstance
+	for _, dbInstance := range output.DBInstances {
+		descs = append(descs, convertDBInstance(&dbInstance))
+	}
+	return descs, nil
+}
+
+func (s *rdsInstance) RestoreFromSnapshot(ctx context.Context) error {
+	_, err := s.core.RestoreDBInstanceFromDBSnapshot(ctx, s.restoreFromSnapshotParam)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *rdsInstance) RestoreToPitr(ctx context.Context) error {
+	_, err := s.core.RestoreDBInstanceToPointInTime(ctx, s.restoreInstancePitrParam)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func convertDBSnapshot(in *types.DBSnapshot) *DescSnapshot {
@@ -437,65 +511,4 @@ func convertParameterGroupStatus(dbParameterGroups []types.DBParameterGroupStatu
 		})
 	}
 	return parameterGroupStatus
-}
-
-func (s *rdsInstance) Describe(ctx context.Context) (*DescInstance, error) {
-	output, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
-	if err != nil {
-		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	desc := &DescInstance{}
-	if len(output.DBInstances) > 0 {
-		desc = convertDBInstance(&output.DBInstances[0])
-	}
-	return desc, nil
-}
-
-func (s *rdsInstance) SetFilter(name string, values []string) Instance {
-	var exists = false
-	for _, filter := range s.describeInstanceParam.Filters {
-		if filter.Name == nil {
-			continue
-		}
-		if *filter.Name == name {
-			filter.Values = values
-			exists = true
-		}
-	}
-	if !exists {
-		s.describeInstanceParam.Filters = append(s.describeInstanceParam.Filters, types.Filter{
-			Name:   aws.String(name),
-			Values: values,
-		})
-	}
-	return s
-}
-
-func (s *rdsInstance) DescribeAll(ctx context.Context) ([]*DescInstance, error) {
-	output, err := s.core.DescribeDBInstances(ctx, s.describeInstanceParam)
-	if err != nil {
-		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBInstanceNotFoundFault); ok {
-			return nil, nil
-		}
-		return nil, err
-	}
-	var descs []*DescInstance
-	for _, dbInstance := range output.DBInstances {
-		descs = append(descs, convertDBInstance(&dbInstance))
-	}
-	return descs, nil
-}
-
-func (s *rdsInstance) RestoreFromSnapshot(ctx context.Context) error {
-	_, err := s.core.RestoreDBInstanceFromDBSnapshot(ctx, s.restoreFromSnapshotParam)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-
-	return nil
 }

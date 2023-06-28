@@ -19,6 +19,8 @@ package rds_test
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/database-mesh/golang-sdk/aws"
 	"github.com/database-mesh/golang-sdk/aws/client/rds"
 
@@ -102,7 +104,7 @@ var _ = Describe("Test Cluster", func() {
 			Expect(err).To(BeNil())
 		})
 	})
-	Context("Test restore cluster", func() {
+	Context("Test restore cluster from snapshot", func() {
 		It("should success", func() {
 			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 			cc := rds.NewService(sess[region]).Cluster()
@@ -115,6 +117,24 @@ var _ = Describe("Test Cluster", func() {
 			if err != nil {
 				fmt.Println(err.Error())
 			}
+		})
+	})
+
+	Context("Test restore cluster to pitr", func() {
+		It("should success", func() {
+			sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
+			cc := rds.NewService(sess[region]).Cluster()
+
+			restoreTime := "2023-06-28T10:35:00Z"
+			t, _ := time.Parse(time.RFC3339, restoreTime)
+
+			cc.SetDBClusterIdentifier("test-cluster-1").
+				SetSourceDBClusterIdentifier("database-1-test-for-pitr").
+				SetEngine("mysql").
+				SetRestoreType(rds.DBClusterRestoreTypeFullCopy).
+				SetRestoreToTime(t)
+
+			Expect(cc.RestoreToPitr(ctx)).To(BeNil())
 		})
 	})
 })

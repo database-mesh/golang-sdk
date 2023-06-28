@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/smithy-go"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
@@ -38,6 +39,9 @@ type Aurora interface {
 	SetInstanceNumber(num int32) Aurora
 	SetDBName(name string) Aurora
 	SetSnapshotIdentifier(id string) Aurora
+	SetSourceDBClusterIdentifier(id string) Aurora
+	SetRestoreToTime(t time.Time) Aurora
+	SetRestoreType(t DBClusterRestoreType) Aurora
 
 	// RDSInstance for Aurora
 	SetDBInstanceIdentifier(id string) Aurora
@@ -55,6 +59,7 @@ type Aurora interface {
 	CreateSnapshot(context.Context) error
 	DescribeSnapshot(context.Context) (*DescClusterSnapshot, error)
 	RestoreFromSnapshot(context.Context) error
+	RestoreToPitr(ctx context.Context) error
 }
 
 type rdsAurora struct {
@@ -104,6 +109,7 @@ func (s *rdsAurora) SetDBClusterIdentifier(id string) Aurora {
 	s.createClusterSnapshotParam.DBClusterIdentifier = aws.String(id)
 	s.describeClusterSnapshotParam.DBClusterIdentifier = aws.String(id)
 	s.restoreClusterFromSnapshotParam.DBClusterIdentifier = aws.String(id)
+	s.restoreClusterPitrParam.DBClusterIdentifier = aws.String(id)
 	return s
 }
 
@@ -115,12 +121,14 @@ func (s *rdsAurora) SetInstanceNumber(num int32) Aurora {
 func (s *rdsAurora) SetVpcSecurityGroupIds(ids []string) Aurora {
 	s.createClusterParam.VpcSecurityGroupIds = ids
 	s.restoreClusterFromSnapshotParam.VpcSecurityGroupIds = ids
+	s.restoreClusterPitrParam.VpcSecurityGroupIds = ids
 	return s
 }
 
 func (s *rdsAurora) SetDBSubnetGroup(sbg string) Aurora {
 	s.createClusterParam.DBSubnetGroupName = aws.String(sbg)
 	s.restoreClusterFromSnapshotParam.DBSubnetGroupName = aws.String(sbg)
+	s.restoreClusterPitrParam.DBSubnetGroupName = aws.String(sbg)
 	return s
 }
 
@@ -138,6 +146,7 @@ func (s *rdsAurora) SetDBInstanceClass(class string) Aurora {
 func (s *rdsAurora) SetPublicAccessible(enable bool) Aurora {
 	s.createInstanceParam.PubliclyAccessible = aws.Bool(enable)
 	s.restoreClusterFromSnapshotParam.PubliclyAccessible = aws.Bool(enable)
+	s.restoreClusterPitrParam.PubliclyAccessible = aws.Bool(enable)
 	return s
 }
 
@@ -172,6 +181,23 @@ func (s *rdsAurora) SetSnapshotIdentifier(id string) Aurora {
 	s.createClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
 	s.describeClusterSnapshotParam.DBClusterSnapshotIdentifier = aws.String(id)
 	s.restoreClusterFromSnapshotParam.SnapshotIdentifier = aws.String(id)
+	return s
+}
+
+func (s *rdsAurora) SetSourceDBClusterIdentifier(id string) Aurora {
+	s.restoreClusterPitrParam.SourceDBClusterIdentifier = aws.String(id)
+	return s
+}
+
+// SetRestoreToTime sets the time to restore the DB cluster to.
+// time in Universal Coordinated Time (UTC) format Constraints
+func (s *rdsAurora) SetRestoreToTime(t time.Time) Aurora {
+	s.restoreClusterPitrParam.RestoreToTime = aws.Time(t)
+	return s
+}
+
+func (s *rdsAurora) SetRestoreType(t DBClusterRestoreType) Aurora {
+	s.restoreClusterPitrParam.RestoreType = aws.String(string(t))
 	return s
 }
 
@@ -289,6 +315,23 @@ func (s *rdsAurora) DescribeSnapshot(ctx context.Context) (*DescClusterSnapshot,
 
 func (s *rdsAurora) RestoreFromSnapshot(ctx context.Context) error {
 	_, err := s.core.RestoreDBClusterFromSnapshot(ctx, s.restoreClusterFromSnapshotParam)
+	if err != nil {
+		return err
+	}
+
+	for i := 1; i <= int(s.instanceNumber); i++ {
+		instanceIdentifierName := fmt.Sprintf("%s-instance-%d", *s.createClusterParam.DBClusterIdentifier, i)
+		s.SetDBInstanceIdentifier(instanceIdentifierName)
+		if _, err = s.core.CreateDBInstance(ctx, s.createInstanceParam); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *rdsAurora) RestoreToPitr(ctx context.Context) error {
+	_, err := s.core.RestoreDBClusterToPointInTime(ctx, s.restoreClusterPitrParam)
 	if err != nil {
 		return err
 	}
