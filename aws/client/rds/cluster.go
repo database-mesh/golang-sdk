@@ -313,7 +313,19 @@ func (s *rdsCluster) SetFinalDBSnapshotIdentifier(id string) Cluster {
 }
 
 func (s *rdsCluster) CreateSnapshot(ctx context.Context) error {
-	_, err := s.core.CreateDBClusterSnapshot(ctx, s.createDBClusterSnapshotParam)
+	snapshot, err := s.DescribeSnapshot(ctx)
+
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterSnapshotNotFoundFault); !ok {
+			return err
+		}
+	}
+
+	if snapshot != nil {
+		return nil
+	}
+
+	_, err = s.core.CreateDBClusterSnapshot(ctx, s.createDBClusterSnapshotParam)
 	return err
 }
 
@@ -345,6 +357,8 @@ type DescCluster struct {
 	ReplicationSourceIdentifier string
 	Status                      string
 	Port                        int32
+	EarliestRestorableTime      time.Time
+	LatestRestorableTime        time.Time
 }
 
 type ClusterMember struct {
@@ -384,6 +398,8 @@ func convertDBCluster(in *types.DBCluster) *DescCluster {
 		ReplicationSourceIdentifier: aws.ToString(in.ReplicationSourceIdentifier),
 		Status:                      aws.ToString(in.Status),
 		Port:                        aws.ToInt32(in.Port),
+		EarliestRestorableTime:      aws.ToTime(in.EarliestRestorableTime),
+		LatestRestorableTime:        aws.ToTime(in.LatestRestorableTime),
 	}
 }
 

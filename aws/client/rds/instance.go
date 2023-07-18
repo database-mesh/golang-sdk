@@ -373,7 +373,19 @@ func (s *rdsInstance) Reboot(ctx context.Context) error {
 }
 
 func (s *rdsInstance) CreateSnapshot(ctx context.Context) error {
-	_, err := s.core.CreateDBSnapshot(ctx, s.createSnapshotParam)
+	snapshot, err := s.DescribeSnapshot(ctx)
+
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterSnapshotNotFoundFault); !ok {
+			return err
+		}
+	}
+
+	if snapshot != nil {
+		return nil
+	}
+
+	_, err = s.core.CreateDBSnapshot(ctx, s.createSnapshotParam)
 	return err
 }
 
