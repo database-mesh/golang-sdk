@@ -202,7 +202,19 @@ func (s *rdsAurora) SetRestoreType(t DBClusterRestoreType) Aurora {
 }
 
 func (s *rdsAurora) CreateSnapshot(ctx context.Context) error {
-	_, err := s.core.CreateDBClusterSnapshot(ctx, s.createClusterSnapshotParam)
+	snapshot, err := s.DescribeSnapshot(ctx)
+
+	if err != nil {
+		if _, ok := errors.Unwrap(err.(*smithy.OperationError).Err).(*types.DBClusterSnapshotNotFoundFault); !ok {
+			return err
+		}
+	}
+
+	if snapshot != nil {
+		return nil
+	}
+
+	_, err = s.core.CreateDBClusterSnapshot(ctx, s.createClusterSnapshotParam)
 	return err
 }
 

@@ -81,6 +81,13 @@ var _ = Describe("Aurora", func() {
 		Expect(aurora.Delete(context.Background())).To(BeNil())
 	})
 
+	It("should create aurora cluster snapshot", func() {
+		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
+		aurora := rds.NewService(sess[region]).Aurora()
+		aurora.SetSnapshotIdentifier("storagenode-sample-snapshot-20230718063124")
+		Expect(aurora.CreateSnapshot(ctx)).To(BeNil())
+	})
+
 	It("should get aurora cluster snapshot", func() {
 		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
