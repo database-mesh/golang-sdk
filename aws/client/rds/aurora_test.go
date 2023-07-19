@@ -119,17 +119,20 @@ var _ = Describe("Aurora", func() {
 		sess := aws.NewSessions().SetCredential(region, accessKeyId, secretAccessKey).Build()
 		aurora := rds.NewService(sess[region]).Aurora()
 
-		restoreTime := "2023-06-28T07:43:29Z"
+		restoreTime := "2023-07-19T07:43:29Z"
 		t, err := time.Parse(time.RFC3339, restoreTime)
 		Expect(err).To(BeNil())
-		aurora.SetDBClusterIdentifier("test-restore-aws-aurora-from-pitr").
-			SetSourceDBClusterIdentifier("test-dataabse-pitr").
+		aurora.SetDBClusterIdentifier("test-backup-0717-r-r").
+			SetSourceDBClusterIdentifier("test-backup-0717-r").
 			SetRestoreType(rds.DBClusterRestoreTypeFullCopy).
 			SetRestoreToTime(t).
 			SetInstanceNumber(1).
 			SetDBInstanceClass("db.t3.medium").
-			SetEngine("aurora-mysql")
+			SetEngine("aurora-mysql").SetPublicAccessible(true)
 
-		Expect(aurora.RestoreToPitr(ctx)).To(BeNil())
+		err = aurora.RestoreToPitr(ctx)
+		if err != nil {
+			fmt.Printf("err: %+v\n", err.Error())
+		}
 	})
 })

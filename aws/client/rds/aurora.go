@@ -146,7 +146,8 @@ func (s *rdsAurora) SetDBInstanceClass(class string) Aurora {
 func (s *rdsAurora) SetPublicAccessible(enable bool) Aurora {
 	s.createInstanceParam.PubliclyAccessible = aws.Bool(enable)
 	s.restoreClusterFromSnapshotParam.PubliclyAccessible = aws.Bool(enable)
-	s.restoreClusterPitrParam.PubliclyAccessible = aws.Bool(enable)
+	//PubliclyAccessible isn't supported for DB engine aurora-mysql
+	//s.restoreClusterPitrParam.PubliclyAccessible = aws.Bool(enable)
 	return s
 }
 
